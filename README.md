@@ -1,51 +1,97 @@
-# GitHub Action Template Repository
+# 🚀 Terraform CI/CD Reusable GitHub Action
 
-![Release](https://github.com/subhamay-bhattacharyya-gha/github-action-template/actions/workflows/release.yaml/badge.svg)&nbsp;![Commit Activity](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-gha/github-action-template)&nbsp;![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-gha/github-action-template)&nbsp;![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-gha/github-action-template)&nbsp;![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-gha/github-action-template)&nbsp;![File Count](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-gha/github-action-template)&nbsp;![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-gha/github-action-template)&nbsp;![Top Language](https://img.shields.io/github/languages/top/subhamay-bhattacharyya-gha/github-action-template)&nbsp;![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/06e35985280456b113298ed56c626e73/raw/github-action-template.json?)
+![Release](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/actions/workflows/release.yaml/badge.svg)&nbsp;![Commit Activity](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![File Count](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Top Language](https://img.shields.io/github/languages/top/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/e888b11add51c19433dd459ff2103354/raw/400755ef0c8db8edbba8e782a17e244a96bde388/tf-ci-reusable-wf.json?)
 
-A Template GitHub Repository to be used to create a composite action.
-
-## Action Name
-
-### Action Description
-
-This GitHub Action provides a reusable composite workflow that sets up Python and interacts with the GitHub API to post a comment on an issue, including a link to a created branch.
+A reusable GitHub Actions workflow for running full CI/CD pipelines on Terraform-based infrastructure. This composite workflow performs validation, linting, cost estimation, metadata tagging, and resource builds with support for AWS and Infracost integrations.
 
 ---
 
-## Inputs
+## 🧾 Action Description
 
-| Name           | Description         | Required | Default        |
-|----------------|---------------------|----------|----------------|
-| `input-1`      | Input description.  | No       | `default-value`|
-| `input-2`      | Input description.  | No       | `default-value`|
-| `input-3`      | Input description.  | No       | `default-value`|
-| `github-token` | GitHub token. Used for API authentication. | Yes | — |
+This GitHub Action:
+
+- Detects infrastructure and service changes
+- Performs security scans and IaC checks (Checkov, TFLint)
+- Tags Terraform resources using Yor
+- Executes Terraform commands (init, validate, plan, apply, destroy)
+- Estimates infrastructure cost with Infracost
+- Builds packages for Lambda, Glue, Step Functions (if applicable)
+
+---
+
+## 🔧 Inputs
+
+| Name             | Description                                                                 | Required | Default               |
+|------------------|-----------------------------------------------------------------------------|----------|------------------------|
+| `environment`     | Environment to deploy to (`ci`, `devl`, `test`, `prod`)                    | ✅ Yes   | —                      |
+| `terraform-dir`   | Directory containing Terraform configuration files                         | ✅ Yes   | `tf`                   |
+| `tf-vars-file`    | Terraform variables file to use                                            | ❌ No    | `terraform.tfvars`     |
+| `ci-pipeline`     | Whether this is a CI pipeline run                                          | ❌ No    | `true`                 |
+
+### 🔐 Secrets
+
+| Name                 | Description                                 | Required |
+|----------------------|---------------------------------------------|----------|
+| `aws-role-arn`       | AWS role ARN to assume                      | ✅ Yes   |
+| `infracost-api-key`  | API key for Infracost                       | ✅ Yes   |
+| `infracost-gist-id`  | Gist ID to store Infracost results          | ✅ Yes   |
+
+---
+
+## 📊 Workflow Overview (Mermaid)
+
+```mermaid
+flowchart TD
+    A[Trigger via workflow_call] --> B[🔎 Check Environments]
+    A --> C[🔎 Detect Changes]
+    A --> D[🔎 Detect Services]
+    A --> E[🔎 Check Branch Issue]
+    B & C & D & E --> F[🧠 Determine Execution Path]
+    
+    F --> G{Contains IaC?}
+    G -- Yes --> H[✔️ Terraform Validate]
+    G -- Yes --> I[📋 Terraform Lint]
+    G -- Yes --> J[🧳 Checkov Scan]
+    G -- Yes --> K[📋 Yor Tagging]
+    K --> L[📋 Terraform Plan]
+    L --> M[💰 Infracost]
+    M --> N[🚧 Terraform Apply]
+    N --> O[✂️ Terraform Destroy]
+
+    F --> P{Builds Required?}
+    P -- Lambda --> Q[🛠️ Lambda Package]
+    P -- Lambda Layer --> R[🛠️ Lambda Layer]
+    P -- Glue --> S[🛠️ Glue Script]
+    P -- Step Function --> T[🛠️ State Machine]
+
+    Q & R & S & T & O --> U[🚀 Create Pull Request]
+```
 
 ---
 
 ## Example Usage
 
 ```yaml
-name: Example Workflow
+name: Terraform CI
 
 on:
-  issues:
-    types: [opened]
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  example:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  call-terraform-ci:
+    uses: subhamay-bhattacharyya-gha/tf-ci-reusable-wf/.github/workflows/ci.yaml@main
+    with:
+      environment: devl
+      terraform-dir: tf
+      tf-vars-file: dev.tfvars
+      ci-pipeline: true
+    secrets:
+      aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
+      infracost-api-key: ${{ secrets.INFRACOST_API_KEY }}
+      infracost-gist-id: ${{ secrets.INFRACOST_GIST_ID }}
 
-      - name: Run Custom Action
-        uses: your-org/your-action-repo@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          input-1: your-value
-          input-2: another-value
-          input-3: something-else
 ```
 
 ## License
