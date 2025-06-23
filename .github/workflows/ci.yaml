@@ -179,7 +179,7 @@ jobs:
     steps:
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.aws-role-arn }}
           aws-region: ${{ vars.AWS_REGION }}
@@ -216,7 +216,7 @@ jobs:
     steps:
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.aws-role-arn }}
           aws-region: ${{ vars.AWS_REGION }}
@@ -307,7 +307,7 @@ jobs:
     needs: [ yor-resource-tagging ]
     steps:
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.aws-role-arn }}
           aws-region: ${{ vars.AWS_REGION }}
@@ -330,7 +330,7 @@ jobs:
     needs: [terraform-plan]
     steps:
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.aws-role-arn }}
           aws-region: ${{ vars.AWS_REGION }}
@@ -355,7 +355,7 @@ jobs:
     needs: [infra-cost]
     steps:
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.aws-role-arn }}
           aws-region: ${{ vars.AWS_REGION }}
@@ -378,7 +378,7 @@ jobs:
     steps:
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.aws-role-arn }}
           aws-region: ${{ vars.AWS_REGION }}
