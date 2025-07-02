@@ -295,7 +295,7 @@ jobs:
     needs: [ terraform-lint, terraform-validate, checkov-scan ]
     steps:
       - name: Call Yor Reusable Action
-        uses: subhamay-bhattacharyya-gha/tf-yor-action@feature/GHA-0003-initial-release
+        uses: subhamay-bhattacharyya-gha/tf-yor-action@main
         with:
           terraform-dir: ${{ inputs.terraform-dir }}
          
