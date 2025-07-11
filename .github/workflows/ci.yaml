@@ -54,8 +54,8 @@ jobs:
         uses: subhamay-bhattacharyya-gha/check-environments-action@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          org-short-name: "sb"
-          region: "us-east-1"
+          org-short-name: ${{ vars.ORG_SHORT_NAME }}
+          region: ${{ vars.AWS_REGION }}
 
   check-branch-issue:
     name: 🔎 Check Branch
