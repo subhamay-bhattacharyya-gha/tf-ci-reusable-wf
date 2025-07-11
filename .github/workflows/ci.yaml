@@ -51,7 +51,7 @@ jobs:
     steps:
       - name: Check Available Environments
         id: check
-        uses: subhamay-bhattacharyya-gha/check-environments-action@ffc42d40f4676b08eeaac06878ad1ba4f98c502b
+        uses: subhamay-bhattacharyya-gha/check-environments-action@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           org-short-name: ${{ vars.ORG_SHORT_NAME }}
