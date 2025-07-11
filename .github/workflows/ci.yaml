@@ -191,7 +191,7 @@ jobs:
         uses: subhamay-bhattacharyya-gha/tf-validate-action@main
         with:
           terraform-dir: ${{ inputs.terraform-dir }}              
-          s3-bucket: ${{ vars.TERRAFORM_STATE_BUCKET }}
+          s3-bucket: ${{ vars.TF_STATE_BUCKET_NAME }}
           s3-region: ${{ vars.AWS_REGION }}
           ci-pipeline: "true"
           soft-fail: "true"                                  
