@@ -51,7 +51,7 @@ jobs:
     steps:
       - name: Check Available Environments
         id: check
-        uses: subhamay-bhattacharyya-gha/check-environments-action@main
+        uses: subhamay-bhattacharyya-gha/check-environments-action@feature/GHA-0008-rename-environments
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -61,7 +61,7 @@ jobs:
     steps:
       - name: Verify branch issue
         id: branch-issue
-        uses: subhamay-bhattacharyya-gha/branch-issue-action@feature/GHA-0008-rename-environments
+        uses: subhamay-bhattacharyya-gha/branch-issue-action@main
 
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
