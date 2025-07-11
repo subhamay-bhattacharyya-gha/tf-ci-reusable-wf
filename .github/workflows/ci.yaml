@@ -321,7 +321,7 @@ jobs:
         with:
           terraform-dir: ${{ inputs.terraform-dir }} 
           tf-vars-file: ${{ inputs.tf-vars-file }}
-          s3-bucket: ${{ vars.TERRAFORM_STATE_BUCKET }}
+          s3-bucket: ${{ vars.TF_STATE_BUCKET_NAME }}
           s3-region: ${{ vars.AWS_REGION }}
           ci-pipeline: ${{ inputs.ci-pipeline }}
 
@@ -344,7 +344,7 @@ jobs:
         with:
           terraform-dir: ${{ inputs.terraform-dir }} 
           ci-pipeline: ${{ inputs.ci-pipeline }}
-          s3-bucket: ${{ vars.TERRAFORM_STATE_BUCKET }}
+          s3-bucket: ${{ vars.TF_STATE_BUCKET_NAME }}
           s3-region: ${{ vars.AWS_REGION }}
           infracost-api-key: ${{ secrets.infracost-api-key }}
           gist-id: ${{ secrets.infracost-gist-id }}
@@ -368,7 +368,7 @@ jobs:
         id: apply
         with:
           terraform-dir: ${{ inputs.terraform-dir }}
-          s3-bucket: ${{ vars.TERRAFORM_STATE_BUCKET }}
+          s3-bucket: ${{ vars.TF_STATE_BUCKET_NAME }}
           s3-region: ${{ vars.AWS_REGION }}
           ci-pipeline: ${{ inputs.ci-pipeline }}
 
@@ -387,18 +387,24 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Terraform Destroy
-        uses: subhamay-bhattacharyya-gha/tf-destroy-action@feature/GHA-0005-terraform-state-managemen
+        uses: subhamay-bhattacharyya-gha/tf-destroy-action@main
         id: destroy
         with:
           terraform-dir: ${{ inputs.terraform-dir }}
-          s3-bucket: ${{ vars.TERRAFORM_STATE_BUCKET }}
+          s3-bucket: ${{ vars.TF_STATE_BUCKET_NAME }}
           s3-region: ${{ vars.AWS_REGION }}
           ci-pipeline: ${{ inputs.ci-pipeline }}
 
-  create-pull-request:
-    name: 🚀 Create Pull Request
+  create-release:
+    name: 🚀 Create Release
     runs-on: ubuntu-latest
-    if: always()
+    if: |
+        (needs.build-lambda.result == 'success' ||
+          needs.build-lambda-layer.result == 'success' ||
+          needs.build-glue.result == 'success' ||
+          needs.build-state-machine.result == 'success' ||
+          needs.terraform-destroy.result == 'success') &&
+          github.ref == 'refs/heads/main'
     needs: 
     - build-lambda
     - build-lambda-layer
@@ -412,6 +418,14 @@ jobs:
     - terraform-apply
     - terraform-destroy
     steps:
-      - name: Create Pull Request
-        id: create-pr
-        run: echo "CI Build completed. Proceed to create a pull request." >> $GITHUB_STEP_SUMMARY
+      - name: Create Release
+        uses: subhamay-bhattacharyya-gha/create-release-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          tag-name: ${{ github.ref_name }}
+          release-name: Release ${{ github.ref_name }}
+          release-body: |
+            This is an automated release created by the CI pipeline.
+            It includes the latest changes from the main branch.
+          draft: false
+          prerelease: false
