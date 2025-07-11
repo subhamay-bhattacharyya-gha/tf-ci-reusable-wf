@@ -48,6 +48,7 @@ jobs:
   check-environments:
     name: 🔎 Check Env
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     steps:
       - name: Check Available Environments
         id: check
