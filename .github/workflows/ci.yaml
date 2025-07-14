@@ -65,12 +65,13 @@ jobs:
     steps:
       - name: Verify branch issue
         id: branch-issue
+        if: ${{ github.ref != 'refs/heads/main' }}
         uses: subhamay-bhattacharyya-gha/branch-issue-action@main
-
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Print Outputs
+        if: ${{ github.ref != 'refs/heads/main' }}
         run: |
           echo "Branch Issue: ${{ steps.branch-issue.outputs.issue-number }}"
           echo "Branch Issue: ${{ steps.branch-issue.outputs.issue-exists }}"
@@ -78,7 +79,6 @@ jobs:
   detect-changes:
     name: 🔎 Detect Change
     runs-on: ubuntu-latest
-    if: ${{ github.ref != 'refs/heads/main' }}
     outputs:
       files-changed: ${{ steps.repo-changes.outputs.files-changed }}
       json-output: ${{ steps.repo-changes.outputs.json-output }}
@@ -87,6 +87,7 @@ jobs:
     steps:
       - name: Detect repository changes
         id: repo-changes
+        if: ${{ github.ref != 'refs/heads/main' }}
         uses: subhamay-bhattacharyya-gha/list-updated-files-action@main
 
   detect-services:
