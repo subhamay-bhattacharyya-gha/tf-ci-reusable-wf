@@ -97,10 +97,12 @@ jobs:
         uses: subhamay-bhattacharyya-gha/list-updated-files-action@main
 
       - name: Repository changes check not required
-        id: repo-changes-feature-main
+        id: repo-changes
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
-          echo "Repository changes check not required"
+          echo "files-changed=[]" >> $GITHUB_OUTPUT
+          echo "json-output=$(echo '{}' | base64)" >> $GITHUB_OUTPUT
+          echo "has-changes=false" >> $GITHUB_OUTPUT
 
   detect-services:
     name: 🔎 Detect Services
@@ -160,6 +162,12 @@ jobs:
       - name: Determine services used and repo changes
         id: prepare-inputs
         run: |
+          if [ -z "${{ needs.detect-changes.outputs.json-output }}" ]; then
+            echo "{}" > repo-changes.json
+          else
+            echo "${{ needs.detect-changes.outputs.json-output }}" | base64 -d > repo-changes.json
+          fi
+
           echo "${{ needs.detect-changes.outputs.json-output }}" | base64 -d > repo-changes.json
           sed -E 's/([{,])([^:{]+):/\1"\2":/g' <<< "${{ needs.detect-services.outputs.services-used }}" > services-used.json
 
