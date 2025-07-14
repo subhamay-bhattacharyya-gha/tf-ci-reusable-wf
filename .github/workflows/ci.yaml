@@ -100,7 +100,7 @@ jobs:
 
       - name: Scan AWS Services
         id: scan
-        uses: subhamay-bhattacharyya-gha/scan-aws-services-action@feature/GHA-0008-upload-execution-path-jso
+        uses: subhamay-bhattacharyya-gha/scan-aws-services-action@main
 
       - name: Save Detected Services to Environment Variable
         run: |
@@ -166,7 +166,7 @@ jobs:
 
       - name: Set Execution Path
         id: set-path
-        uses: subhamay-bhattacharyya-gha/exec-path-action@main
+        uses: subhamay-bhattacharyya-gha/exec-path-action@feature/GHA-0008-upload-execution-path-jso
         with:
           files-modified: repo-changes.json
           services-used: services-used.json
