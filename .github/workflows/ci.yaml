@@ -424,10 +424,4 @@ jobs:
         uses: subhamay-bhattacharyya-gha/create-release-action@feature/GHA-0002-initial-release
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          tag-name: ${{ github.ref_name }}
-          release-name: Release ${{ github.ref_name }}
-          release-body: |
-            This is an automated release created by the CI pipeline.
-            It includes the latest changes from the main branch.
-          draft: false
-          prerelease: false
+
