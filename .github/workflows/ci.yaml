@@ -100,7 +100,7 @@ jobs:
 
       - name: Scan AWS Services
         id: scan
-        uses: subhamay-bhattacharyya-gha/scan-aws-services-action@main
+        uses: subhamay-bhattacharyya-gha/scan-aws-services-action@feature/GHA-0008-upload-execution-path-jso
 
       - name: Save Detected Services to Environment Variable
         run: |
