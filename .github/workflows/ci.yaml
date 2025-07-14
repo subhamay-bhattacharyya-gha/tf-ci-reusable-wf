@@ -92,12 +92,12 @@ jobs:
 
     steps:
       - name: Detect repository changes
-        id: repo-changes-feature-branch
+        id: repo-changes
         if: ${{ github.ref != 'refs/heads/main' }}
         uses: subhamay-bhattacharyya-gha/list-updated-files-action@main
 
       - name: Repository changes check not required
-        id: repo-changes
+        id: repo-changes-main
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
           echo "files-changed=[]" >> $GITHUB_OUTPUT
