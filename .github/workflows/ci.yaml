@@ -76,6 +76,12 @@ jobs:
           echo "Branch Issue: ${{ steps.branch-issue.outputs.issue-number }}"
           echo "Branch Issue: ${{ steps.branch-issue.outputs.issue-exists }}"
 
+      - name: Check branch issue not required
+        id: repo-changes-feature-main
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          echo "Check branch issue not required on main branch"
+
   detect-changes:
     name: 🔎 Detect Change
     runs-on: ubuntu-latest
@@ -86,9 +92,15 @@ jobs:
 
     steps:
       - name: Detect repository changes
-        id: repo-changes
+        id: repo-changes-feature-branch
         if: ${{ github.ref != 'refs/heads/main' }}
         uses: subhamay-bhattacharyya-gha/list-updated-files-action@main
+
+      - name: Repository changes check not required
+        id: repo-changes-feature-main
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          echo "Repository changes check not required"
 
   detect-services:
     name: 🔎 Detect Services
