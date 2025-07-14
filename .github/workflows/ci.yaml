@@ -61,7 +61,6 @@ jobs:
   check-branch-issue:
     name: 🔎 Check Branch
     runs-on: ubuntu-latest
-    if: ${{ github.ref != 'refs/heads/main' }}
     steps:
       - name: Verify branch issue
         id: branch-issue
