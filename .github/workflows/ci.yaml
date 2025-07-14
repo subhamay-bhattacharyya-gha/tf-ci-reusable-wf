@@ -75,12 +75,6 @@ jobs:
           echo "Branch Issue: ${{ steps.branch-issue.outputs.issue-number }}"
           echo "Branch Issue: ${{ steps.branch-issue.outputs.issue-exists }}"
 
-      - name: Check branch issue not required
-        id: repo-changes-feature-main
-        if: ${{ github.ref == 'refs/heads/main' }}
-        run: |
-          echo "Check branch issue not required on main branch"
-
   detect-changes:
     name: 🔎 Detect Change
     runs-on: ubuntu-latest
@@ -94,14 +88,6 @@ jobs:
         id: repo-changes
         if: ${{ github.ref != 'refs/heads/main' }}
         uses: subhamay-bhattacharyya-gha/list-updated-files-action@main
-
-      - name: Repository changes check not required
-        id: repo-changes-main
-        if: ${{ github.ref == 'refs/heads/main' }}
-        run: |
-          echo "files-changed=[]" >> $GITHUB_OUTPUT
-          echo "json-output=$(echo '{}' | base64)" >> $GITHUB_OUTPUT
-          echo "has-changes=false" >> $GITHUB_OUTPUT
 
   detect-services:
     name: 🔎 Detect Services
@@ -417,8 +403,8 @@ jobs:
           s3-region: ${{ vars.AWS_REGION }}
           ci-pipeline: ${{ inputs.ci-pipeline }}
 
-  create-release:
-    name: 🚀 Create Release
+  create-pull-request:
+    name: 🚀 Create Pull Request
     runs-on: ubuntu-latest
     if: |
         (needs.build-lambda.result == 'success' ||
@@ -426,7 +412,7 @@ jobs:
           needs.build-glue.result == 'success' ||
           needs.build-state-machine.result == 'success' ||
           needs.terraform-destroy.result == 'success') &&
-          github.ref == 'refs/heads/main'
+          github.ref != 'refs/heads/main'
     needs: 
     - build-lambda
     - build-lambda-layer
@@ -440,8 +426,9 @@ jobs:
     - terraform-apply
     - terraform-destroy
     steps:
-      - name: Create Release
-        uses: subhamay-bhattacharyya-gha/create-release-action@feature/GHA-0002-initial-release
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Pull Request
+        run: echo "Creating pull request..."
+        # uses: subhamay-bhattacharyya-gha/create-release-action@feature/GHA-0002-initial-release
+        # with:
+        #   github-token: ${{ secrets.GITHUB_TOKEN }}
 
