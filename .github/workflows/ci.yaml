@@ -181,6 +181,21 @@ jobs:
         if: steps.set-path.outputs.execution-path == ''
         run: echo "execution-path={}" >> $GITHUB_OUTPUT
 
+      - name: Process execution path
+        run: |
+          echo "Processing execution path..."
+          echo '${{ steps.exec-path.outputs.execution-path-json }}' | jq '.'
+          
+          # Save to environment for later steps
+          echo "EXECUTION_PATH_JSON=${{ steps.exec-path.outputs.execution-path-json }}" >> $GITHUB_ENV
+
+      - name: Upload execution path artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-path-data
+          path: execution-path.json
+          retention-days: 30
+
   terraform-validate:
     if: ${{ fromJSON(needs.execution-path.outputs.execution-path).IaC == true }}
     name: ✔️ Terraform Validate
