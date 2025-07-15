@@ -211,7 +211,7 @@ jobs:
       - name: Run TFLint
         uses: subhamay-bhattacharyya-gha/tf-lint-action@main
         with:
-          tflint-ver: "v0.52.0"
+          tflint-ver: ${{ vars.TF_LINT_VER }}
           use-cache: "true"
           tflint-format: "compact"
 
