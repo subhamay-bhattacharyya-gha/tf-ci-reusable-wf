@@ -171,24 +171,6 @@ jobs:
           files-modified: repo-changes.json
           services-used: services-used.json
 
-      - name: Validate Execution Path Output
-        if: steps.set-path.outputs.services-used == ''
-        run: |
-          echo "Execution path output is empty, setting default fallback."
-          echo "EXECUTION_PATH={}" >> $GITHUB_ENV
-
-      - name: Set Fallback Output if Needed
-        if: steps.set-path.outputs.services-used == ''
-        run: echo "execution-path={}" >> $GITHUB_OUTPUT
-
-      - name: Process execution path
-        run: |
-          echo "Processing execution path..."
-          echo '${{ steps.exec-path.outputs.services-used }}' | jq '.'
-          
-          # Save to environment for later steps
-          echo "EXECUTION_PATH_JSON=${{ steps.exec-path.outputs.services-used }}" >> $GITHUB_ENV
-
       - name: Upload execution path artifact
         uses: actions/upload-artifact@v4
         with:
