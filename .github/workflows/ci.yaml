@@ -166,7 +166,7 @@ jobs:
 
       - name: Set Execution Path
         id: set-path
-        uses: subhamay-bhattacharyya-gha/exec-path-action@feature/GHA-0008-upload-execution-path-jso
+        uses: subhamay-bhattacharyya-gha/exec-path-action@main
         with:
           files-modified: repo-changes.json
           services-used: services-used.json
