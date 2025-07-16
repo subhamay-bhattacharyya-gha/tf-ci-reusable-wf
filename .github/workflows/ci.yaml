@@ -412,6 +412,7 @@ jobs:
     - terraform-destroy
     - infra-cost
     - yor-resource-tagging
+    - checkov-scan
     - build-lambda
     - build-lambda-layer
     - build-glue
@@ -426,6 +427,7 @@ jobs:
         needs.terraform-destroy.result != 'failure' &&
         needs.infra-cost.result != 'failure' &&
         needs.yor-resource-tagging.result != 'failure' &&
+        needs.checkov-scan.result != 'failure' &&
         needs.build-lambda.result != 'failure' &&
         needs.build-lambda-layer.result != 'failure' &&
         needs.build-glue.result != 'failure' &&
