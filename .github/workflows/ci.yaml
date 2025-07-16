@@ -405,18 +405,6 @@ jobs:
     name: 🚀 Create Pull Request
     runs-on: ubuntu-latest
     if: success()
-    needs: 
-    - build-lambda
-    - build-lambda-layer
-    - build-glue
-    - build-state-machine
-    - terraform-validate
-    - terraform-lint
-    - checkov-scan
-    - infra-cost
-    - terraform-plan
-    - terraform-apply
-    - terraform-destroy
     steps:
       - name: Create Pull Request
         run: echo "Create pull request manually..."
