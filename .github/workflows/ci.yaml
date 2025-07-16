@@ -306,6 +306,7 @@ jobs:
         uses: subhamay-bhattacharyya-gha/tf-yor-action@main
         with:
           terraform-dir: ${{ inputs.terraform-dir }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
          
   terraform-plan:
     if: ${{ fromJSON(needs.execution-path.outputs.execution-path).IaC == true }}
