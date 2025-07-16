@@ -404,13 +404,7 @@ jobs:
   create-pull-request:
     name: 🚀 Create Pull Request
     runs-on: ubuntu-latest
-    if: |
-        (needs.build-lambda.result == 'success' ||
-          needs.build-lambda-layer.result == 'success' ||
-          needs.build-glue.result == 'success' ||
-          needs.build-state-machine.result == 'success' ||
-          needs.terraform-destroy.result == 'success') &&
-          github.ref != 'refs/heads/main'
+    if: success()
     needs: 
     - build-lambda
     - build-lambda-layer
@@ -425,8 +419,4 @@ jobs:
     - terraform-destroy
     steps:
       - name: Create Pull Request
-        run: echo "Creating pull request..."
-        # uses: subhamay-bhattacharyya-gha/create-release-action@feature/GHA-0002-initial-release
-        # with:
-        #   github-token: ${{ secrets.GITHUB_TOKEN }}
-
+        run: echo "Create pull request manually..."
