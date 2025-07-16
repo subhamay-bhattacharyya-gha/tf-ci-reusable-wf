@@ -404,8 +404,33 @@ jobs:
   create-pull-request:
     name: 🚀 Create Pull Request
     runs-on: ubuntu-latest
-    needs: [terraform-apply, terraform-destroy]
-    if: success()
+    needs: 
+    - terraform-lint
+    - terraform-validate
+    - terraform-plan
+    - terraform-apply
+    - terraform-destroy
+    - infra-cost
+    - yor-resource-tagging
+    - build-lambda
+    - build-lambda-layer
+    - build-glue
+    - build-state-machine
+    if: >-
+      ${{
+        always() &&
+        needs.terraform-lint.result != 'failure' &&
+        needs.terraform-validate.result != 'failure' &&
+        needs.terraform-plan.result != 'failure' &&
+        needs.terraform-apply.result != 'failure' &&
+        needs.terraform-destroy.result != 'failure' &&
+        needs.infra-cost.result != 'failure' &&
+        needs.yor-resource-tagging.result != 'failure' &&
+        needs.build-lambda.result != 'failure' &&
+        needs.build-lambda-layer.result != 'failure' &&
+        needs.build-glue.result != 'failure' &&
+        needs.build-state-machine.result != 'failure'
+      }}
     steps:
       - name: Create Pull Request
         run: echo "Create pull request manually..."
