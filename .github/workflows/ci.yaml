@@ -94,7 +94,7 @@ jobs:
       services-used: ${{ steps.scan.outputs.services-used }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Scan AWS Services
         id: scan
@@ -140,7 +140,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Determine services used and repo changes
         id: prepare-inputs
