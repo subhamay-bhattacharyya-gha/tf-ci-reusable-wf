@@ -11,6 +11,7 @@ on:
         description: "TFLint version to install"
         required: true
         type: string
+
       # Backend Type Selection
       backend-type:
         description: "Backend type to use: 's3' for AWS S3 or 'remote' for HCP Terraform Cloud."
@@ -24,6 +25,13 @@ on:
         required: false
         type: string
 
+      # Terraform configuration
+      terraform-dir:
+        description: "Directory containing Terraform configuration files relative to cloud provider path"
+        required: false
+        type: string
+        default: "tf"
+      
       # Terraform artifacts
       tf-vars-file:
         description: "Optional Terraform variable file"
@@ -75,6 +83,8 @@ jobs:
           echo "Cloud Provider: ${{ inputs.cloud-provider }}"
           echo "TFLint Version: ${{ inputs.tflint-ver }}"
           echo "Backend Type: ${{ inputs.backend-type }}"
+          echo "Terraform Directory: ${{ inputs.terraform-dir }}"
+          echo "TF Vars File: ${{ inputs.tf-vars-file }}"
           echo "TFC Token: ${{ secrets.tfc-token && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "AWS Region: ${{ inputs.aws-region }}"
           echo "AWS Role to Assume: ${{ secrets.aws-role-to-assume && '[PROVIDED]' || '[NOT PROVIDED]' }}"
@@ -96,7 +106,7 @@ jobs:
       - name: Run TFLint
         uses: subhamay-bhattacharyya-gha/tf-lint-action@main
         with:
-          terraform-dir: infra/${{ inputs.cloud-provider }}/tf
+          terraform-dir: infra/${{ inputs.cloud-provider }}/${{ inputs.terraform-dir }}
           tflint-ver: ${{ inputs.tflint-ver }}
           use-cache: "true"
           tflint-format: "compact"
@@ -111,7 +121,7 @@ jobs:
       - name: Terraform Validate 
         uses: subhamay-bhattacharyya-gha/tf-validate-action@main
         with:
-          terraform-dir: infra/${{ inputs.cloud-provider }}/tf
+          terraform-dir: infra/${{ inputs.cloud-provider }}/${{ inputs.terraform-dir }}
 
   terraform-plan:
     name: 🔍 Plan - ${{ inputs.cloud-provider }}
@@ -124,7 +134,7 @@ jobs:
         uses: subhamay-bhattacharyya-gha/tf-plan-action@main
         with:
           cloud-provider: ${{ inputs.cloud-provider }}
-          terraform-dir: infra/${{ inputs.cloud-provider }}/tf
+          terraform-dir: infra/${{ inputs.cloud-provider }}/${{ inputs.terraform-dir }}
           backend-type: ${{ inputs.backend-type }}
           tfc-token: ${{ secrets.tfc-token }}
           aws-region: ${{ inputs.aws-region }}
