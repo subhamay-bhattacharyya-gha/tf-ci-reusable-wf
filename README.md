@@ -33,25 +33,26 @@ This GitHub Action provides a reusable workflow that:
 
 ## 🔧 Inputs
 
-| Name             | Description                                                                 | Required | Default               |
-|------------------|-----------------------------------------------------------------------------|----------|------------------------|
-| `cloud-provider` | Target cloud provider (`aws`, `gcp`, `azure`)                             | ✅ Yes   | —                      |
-| `tflint-ver`     | TFLint version to install                                                  | ✅ Yes   | —                      |
-| `backend-type`   | Backend type: `s3` for AWS S3 or `remote` for HCP Terraform Cloud         | ❌ No    | `s3`                   |
-| `aws-region`     | AWS region for authentication (required when cloud-provider is `aws`)     | ❌ No    | —                      |
-| `tf-vars-file`   | Terraform variables file to use                                            | ❌ No    | `terraform.tfvars`     |
+| Name                    | Description                                                                 | Required | Default               |
+|-------------------------|-----------------------------------------------------------------------------|----------|------------------------|
+| `cloud-provider`        | Target cloud provider (`aws`, `gcp`, `azure`)                             | ✅ Yes   | —                      |
+| `tflint-ver`            | TFLint version to install                                                  | ✅ Yes   | —                      |
+| `backend-type`          | Backend type: `s3` for AWS S3 or `remote` for HCP Terraform Cloud         | ❌ No    | `s3`                   |
+| `aws-region`            | AWS region for authentication (required when cloud-provider is `aws`)     | ❌ No    | —                      |
+| `aws-role-to-assume`    | AWS IAM role ARN to assume (required when cloud-provider is `aws`)        | ❌ No    | —                      |
+| `gcp-wif-provider`      | GCP Workload Identity Federation provider (required when cloud-provider is `gcp`) | ❌ No | —                      |
+| `gcp-service-account`   | GCP service account email for authentication (required when cloud-provider is `gcp`) | ❌ No | —                      |
+| `terraform-dir`         | Directory containing Terraform configuration files relative to cloud provider path | ❌ No | `tf`                   |
+| `tf-vars-file`          | Terraform variables file to use                                            | ❌ No    | `terraform.tfvars`     |
+| `azure-client-id`       | Azure client ID for authentication (required when cloud-provider is `azure`) | ❌ No | —                      |
+| `azure-tenant-id`       | Azure tenant ID for authentication (required when cloud-provider is `azure`) | ❌ No | —                      |
+| `azure-subscription-id` | Azure subscription ID for authentication (required when cloud-provider is `azure`) | ❌ No | —                      |
 
 ### 🔐 Secrets
 
 | Name                    | Description                                                      | Required When           |
 |-------------------------|------------------------------------------------------------------|-------------------------|
 | `tfc-token`             | HCP Terraform Cloud API token                                   | `backend-type` = `remote` |
-| `aws-role-to-assume`    | AWS IAM role ARN to assume                                       | `cloud-provider` = `aws` |
-| `gcp-wif-provider`      | GCP Workload Identity Federation provider                        | `cloud-provider` = `gcp` |
-| `gcp-service-account`   | GCP service account email for authentication                     | `cloud-provider` = `gcp` |
-| `azure-client-id`       | Azure client ID for authentication                               | `cloud-provider` = `azure` |
-| `azure-tenant-id`       | Azure tenant ID for authentication                               | `cloud-provider` = `azure` |
-| `azure-subscription-id` | Azure subscription ID for authentication                         | `cloud-provider` = `azure` |
 
 ---
 
@@ -94,9 +95,9 @@ jobs:
       tflint-ver: "v0.50.0"
       backend-type: s3
       aws-region: us-east-1
+      aws-role-to-assume: "arn:aws:iam::123456789012:role/terraform-role"
+      terraform-dir: tf
       tf-vars-file: terraform.tfvars
-    secrets:
-      aws-role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 ```
 
 ### GCP with HCP Terraform Cloud Backend
@@ -117,11 +118,12 @@ jobs:
       cloud-provider: gcp
       tflint-ver: "v0.50.0"
       backend-type: remote
+      gcp-wif-provider: "projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider"
+      gcp-service-account: "terraform@my-project.iam.gserviceaccount.com"
+      terraform-dir: tf
       tf-vars-file: gcp.tfvars
     secrets:
       tfc-token: ${{ secrets.TFC_TOKEN }}
-      gcp-wif-provider: ${{ secrets.GCP_WIF_PROVIDER }}
-      gcp-service-account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 ```
 
 ### Azure with S3 Backend
@@ -142,11 +144,11 @@ jobs:
       cloud-provider: azure
       tflint-ver: "v0.50.0"
       backend-type: s3
+      terraform-dir: tf
       tf-vars-file: azure.tfvars
-    secrets:
-      azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-      azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      azure-client-id: "your-azure-client-id"
+      azure-tenant-id: "your-azure-tenant-id"
+      azure-subscription-id: "your-azure-subscription-id"
 ```
 
 ## 🏗️ Directory Structure
