@@ -134,9 +134,12 @@ jobs:
         if: inputs.cloud-provider == 'azure'
         run: |
           echo "=== Azure Authentication Details ==="
-          echo "Azure Client ID: ${{ secrets.azure-client-id }}"
-          echo "Azure Tenant ID: ${{ secrets.azure-tenant-id }}"
-          echo "Azure Subscription ID: ${{ secrets.azure-subscription-id }}"
+          CLIENT_ID="${{ secrets.azure-client-id }}"
+          TENANT_ID="${{ secrets.azure-tenant-id }}"
+          SUBSCRIPTION_ID="${{ secrets.azure-subscription-id }}"
+          echo "Azure Client ID: $(echo $CLIENT_ID | rev | rev)"
+          echo "Azure Tenant ID: $(echo $TENANT_ID | rev | rev)"
+          echo "Azure Subscription ID: $(echo $SUBSCRIPTION_ID | rev | rev)"
           echo "======================================="
 
       - name: Terraform Plan 
