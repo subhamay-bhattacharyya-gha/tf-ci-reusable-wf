@@ -76,6 +76,10 @@ on:
         description: "HCP Terraform Cloud API token. Required when backend-type is 'remote'."
         required: false
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   terraform-lint:
     name: ⚙️ TFLint - ${{ inputs.cloud-provider }}
