@@ -130,6 +130,15 @@ jobs:
       - terraform-validate
 
     steps:
+      - name: Print Azure Authentication Details
+        if: inputs.cloud-provider == 'azure'
+        run: |
+          echo "=== Azure Authentication Details ==="
+          echo "Azure Client ID: ${{ secrets.azure-client-id }}"
+          echo "Azure Tenant ID: ${{ secrets.azure-tenant-id }}"
+          echo "Azure Subscription ID: ${{ secrets.azure-subscription-id }}"
+          echo "======================================="
+
       - name: Terraform Plan 
         uses: subhamay-bhattacharyya-gha/tf-plan-action@main
         with:
