@@ -139,17 +139,8 @@ jobs:
       - terraform-validate
 
     steps:
-      - name: Print Azure Authentication Details
-        if: inputs.cloud-provider == 'azure'
-        run: |
-          echo "=== Azure Authentication Details ==="
-          echo "Azure Client ID: ${{ inputs.azure-client-id }}"
-          echo "Azure Tenant ID: ${{ inputs.azure-tenant-id }}"
-          echo "Azure Subscription ID: ${{ inputs.azure-subscription-id }}"
-          echo "======================================="
-
       - name: Terraform Plan 
-        uses: subhamay-bhattacharyya-gha/tf-plan-action@main
+        uses: subhamay-bhattacharyya-gha/tf-plan-action@bug/GHA-0042-fix-the-azure-auth-step
         with:
           cloud-provider: ${{ inputs.cloud-provider }}
           terraform-dir: infra/${{ inputs.cloud-provider }}/${{ inputs.terraform-dir }}
