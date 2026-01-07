@@ -163,3 +163,4 @@ jobs:
           azure-tenant-id: ${{ inputs.azure-tenant-id }}
           azure-subscription-id: ${{ inputs.azure-subscription-id }}
           tf-vars-file: ${{ inputs.tf-vars-file }}
+          tf-plan-name: ${{ inputs.cloud-provider }}-terraform-plan
