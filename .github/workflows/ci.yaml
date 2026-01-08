@@ -1,431 +1,154 @@
-name: Terraform CI Pipeine (Reusable)
-description: |
-  This is a reusable GitHub Actions workflow for CI/CD using Terraform.
-  It includes steps for linting, validating, scanning, and building AWS resources.
-  The workflow is designed to be triggered by other workflows or manually.
-  It also includes steps for checking environments, detecting changes, and preparing builds.
+name: Terraform Multi-Cloud CI Build
 
 on:
   workflow_call:
     inputs:
-      environment:
-        description: "Environment to deploy to (e.g., ci, devl, test, prod)."
+      cloud-provider:
+        description: "Target cloud provider (aws, gcp, azure)"
         required: true
         type: string
-      terraform-dir:
-        description: "Directory containing Terraform configuration files."
+      tflint-ver:
+        description: "TFLint version to install"
         required: true
+        type: string
+
+      # Backend Type Selection
+      backend-type:
+        description: "Backend type to use: 's3' for AWS S3 or 'remote' for HCP Terraform Cloud."
+        required: false
+        type: string
+        default: "s3"
+
+      # AWS Authentication Inputs
+      aws-region:
+        description: "AWS region for authentication. Required when cloud-provider is 'aws'."
+        required: false
+        type: string
+
+      # GCP Authentication Inputs
+      gcp-service-account:
+        description: "GCP service account email for authentication. Required when cloud-provider is 'gcp'."
+        required: false
+        type: string
+
+      # Azure Authentication Inputs
+      terraform-dir:
+        description: "Directory containing Terraform configuration files relative to cloud provider path"
+        required: false
         type: string
         default: "tf"
+      
+      # Terraform artifacts
       tf-vars-file:
-        description: "Terraform variables file to use."
+        description: "Optional Terraform variable file"
         required: false
         type: string
         default: "terraform.tfvars"
-      ci-pipeline:
-        description: "Indicates if this is a CI pipeline run."
-        required: false
-        type: boolean
-        default: true
     secrets:
-      aws-role-arn:
-        description: "AWS role ARN for assuming a role."
-        required: true
-      infracost-api-key:
-        description: "API key for Infracost."
-        required: true
-      infracost-gist-id:
-        description: "Gist ID for Infracost output."
-        required: true
+      # HCP Terraform Cloud Secret
+      tfc-token:
+        description: "HCP Terraform Cloud API token. Required when backend-type is 'remote'."
+        required: false
+
+      # AWS Authentication Secret
+      aws-role-to-assume:
+        description: "AWS IAM role ARN to assume. Required when cloud-provider is 'aws'."
+        required: false
+
+      # GCP Authentication Secret
+      gcp-wif-provider:
+        description: "GCP Workload Identity Federation provider. Required when cloud-provider is 'gcp'."
+        required: false
+
+      # Azure Authentication Secrets
+      azure-client-id:
+        description: "Azure client ID for authentication. Required when cloud-provider is 'azure'."
+        required: false
+
+      azure-tenant-id:
+        description: "Azure tenant ID for authentication. Required when cloud-provider is 'azure'."
+        required: false
+
+      azure-subscription-id:
+        description: "Azure subscription ID for authentication. Required when cloud-provider is 'azure'."
+        required: false
 
 permissions:
   id-token: write
-  contents: write
-  # actions: read
-
+  contents: read
 
 jobs:
-  check-environments:
-    name: 🔎 Check Env
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    steps:
-      - name: Check Available Environments
-        id: check
-        uses: subhamay-bhattacharyya-gha/check-environments-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          org-short-name: ${{ vars.ORG_SHORT_NAME }}
-          region: ${{ vars.AWS_REGION }}
-
-  check-branch-issue:
-    name: 🔎 Check Branch
-    runs-on: ubuntu-latest
-    steps:
-      - name: Verify branch issue
-        id: branch-issue
-        uses: subhamay-bhattacharyya-gha/branch-issue-action@main
-
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Print Outputs
-        run: |
-          echo "Branch Issue: ${{ steps.branch-issue.outputs.issue-number }}"
-          echo "Branch Issue: ${{ steps.branch-issue.outputs.issue-exists }}"
-
-  detect-changes:
-    name: 🔎 Detect Change
-    runs-on: ubuntu-latest
-    outputs:
-      files-changed: ${{ steps.repo-changes.outputs.files-changed }}
-      json-output: ${{ steps.repo-changes.outputs.json-output }}
-      has-changes: ${{ steps.repo-changes.outputs.has-changes }}
-
-    steps:
-      - name: Detect repository changes
-        id: repo-changes
-        uses: subhamay-bhattacharyya-gha/list-updated-files-action@main
-
-  detect-services:
-    name: 🔎 Detect Services
-    runs-on: ubuntu-latest
-    outputs:
-      services-used: ${{ steps.scan.outputs.services-used }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Scan AWS Services
-        id: scan
-        uses: subhamay-bhattacharyya-gha/scan-aws-services-action@main
-
-      - name: Save Detected Services to Environment Variable
-        run: |
-          echo "Detected Services: ${{ steps.scan.outputs.services-used }}"
-          echo 'SERVICES_USED=${{ steps.scan.outputs.services-used }}' >> $GITHUB_ENV
-
-      - name: Print AWS Service Detection Table
-        run: |
-          echo "## AWS Services Detected" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Service               | Used |" >> $GITHUB_STEP_SUMMARY
-          echo "|------------------------|------|" >> $GITHUB_STEP_SUMMARY
-
-          echo "🔍 Raw SERVICES_USED: $SERVICES_USED"
-
-          node -e "
-            try {
-              const raw = process.env.SERVICES_USED;
-              const result = JSON.parse(raw);
-              const emoji = (val) => val ? '✅' : '❌';
-              const rows = Object.entries(result)
-                .map(([key, val]) => \`| \${key.padEnd(22)} | \${emoji(val)} |\`)
-                .join('\n');
-
-              require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, rows + '\n');
-            } catch (e) {
-              console.error('❌ Failed to parse SERVICES_USED:', e.message);
-              console.error('💥 Value received:', process.env.SERVICES_USED);
-              process.exit(1);
-            }
-          "
-
-  execution-path:
-    name: 🔎 Det. Exec Path
-    runs-on: ubuntu-latest
-    needs: [check-environments, check-branch-issue, detect-services, detect-changes]
-    outputs:
-      execution-path: ${{ steps.set-path.outputs.execution-path }}
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Determine services used and repo changes
-        id: prepare-inputs
-        run: |
-          echo "${{ needs.detect-changes.outputs.json-output }}" | base64 -d > repo-changes.json
-          sed -E 's/([{,])([^:{]+):/\1"\2":/g' <<< "${{ needs.detect-services.outputs.services-used }}" > services-used.json
-
-      - name: Debug parsed input files
-        run: |
-          echo "Repo Changes JSON"
-          cat repo-changes.json
-          echo "---------------------------"
-          echo "Services Used JSON"
-          cat services-used.json
-
-      - name: Set Execution Path
-        id: set-path
-        uses: subhamay-bhattacharyya-gha/exec-path-action@main
-        with:
-          files-modified: repo-changes.json
-          services-used: services-used.json
-
-      - name: Validate Execution Path Output
-        if: steps.set-path.outputs.execution-path == ''
-        run: |
-          echo "Execution path output is empty, setting default fallback."
-          echo "EXECUTION_PATH={}" >> $GITHUB_ENV
-
-      - name: Set Fallback Output if Needed
-        if: steps.set-path.outputs.execution-path == ''
-        run: echo "execution-path={}" >> $GITHUB_OUTPUT
-
-  terraform-validate:
-    if: ${{ fromJSON(needs.execution-path.outputs.execution-path).IaC == true }}
-    name: ✔️ Terraform Validate
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    needs: [execution-path, detect-services, detect-changes]
-    steps:
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: ${{ secrets.aws-role-arn }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Terraform Validation and Formatting Checks
-        id: validate
-        uses: subhamay-bhattacharyya-gha/tf-validate-action@main
-        with:
-          terraform-dir: ${{ inputs.terraform-dir }}              
-          s3-bucket: ${{ vars.TF_STATE_BUCKET_NAME }}
-          s3-region: ${{ vars.AWS_REGION }}
-          ci-pipeline: "true"
-          soft-fail: "true"                                  
-
   terraform-lint:
-    name: 📋 Terraform Lint
+    name: ⚙️ TFLint - ${{ inputs.cloud-provider }}
     runs-on: ubuntu-latest
-    needs: [execution-path, detect-services, detect-changes]
-    if: ${{ fromJSON(needs.execution-path.outputs.execution-path).IaC == true }}
+    
     steps:
+      - name: Print Inputs
+        run: |
+          echo "=== Workflow Inputs ==="
+          echo "Cloud Provider: ${{ inputs.cloud-provider }}"
+          echo "TFLint Version: ${{ inputs.tflint-ver }}"
+          echo "Backend Type: ${{ inputs.backend-type }}"
+          echo "Terraform Directory: ${{ inputs.terraform-dir }}"
+          echo "TF Vars File: ${{ inputs.tf-vars-file }}"
+          echo "TFC Token: ${{ secrets.tfc-token && '[PROVIDED]' || '[NOT PROVIDED]' }}"
+          echo "AWS Region: ${{ inputs.aws-region }}"
+          echo "AWS Role to Assume: ${{ secrets.aws-role-to-assume && '[PROVIDED]' || '[NOT PROVIDED]' }}"
+          echo "GCP WIF Provider: ${{ secrets.gcp-wif-provider && '[PROVIDED]' || '[NOT PROVIDED]' }}"
+          echo "GCP Service Account: ${{ inputs.gcp-service-account }}"
+          echo "Azure Client ID: ${{ secrets.azure-client-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
+          echo "Azure Tenant ID: ${{ secrets.azure-tenant-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
+          echo "Azure Subscription ID: ${{ secrets.azure-subscription-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
+          echo "======================="
+
+      - name: Validate Cloud Provider
+        run: |
+          if [[ "${{ inputs.cloud-provider }}" != "aws" && "${{ inputs.cloud-provider }}" != "gcp" && "${{ inputs.cloud-provider }}" != "azure" ]]; then
+            echo "Error: Invalid cloud provider '${{ inputs.cloud-provider }}'. Must be one of: aws, gcp, azure"
+            exit 1
+          fi
+          echo "Valid cloud provider: ${{ inputs.cloud-provider }}"
+
       - name: Run TFLint
         uses: subhamay-bhattacharyya-gha/tf-lint-action@main
         with:
-          tflint-ver: "v0.52.0"
+          terraform-dir: infra/${{ inputs.cloud-provider }}/${{ inputs.terraform-dir }}
+          tflint-ver: ${{ inputs.tflint-ver }}
           use-cache: "true"
           tflint-format: "compact"
 
-  checkov-scan:
-    if: ${{ fromJSON(needs.execution-path.outputs.execution-path).IaC == true }}
-    name: 🧳 Checkov Scan
+  terraform-validate:
+    name: ✅ Validate - ${{ inputs.cloud-provider }}
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    needs: [execution-path, detect-services, detect-changes]
-    steps:
+    needs: 
+      - terraform-lint
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
+    steps:
+      - name: Terraform Validate 
+        uses: subhamay-bhattacharyya-gha/tf-validate-action@main
         with:
-          role-to-assume: ${{ secrets.aws-role-arn }}
-          aws-region: ${{ vars.AWS_REGION }}
+          terraform-dir: infra/${{ inputs.cloud-provider }}/${{ inputs.terraform-dir }}
 
-      - name: Checkov Scan
-        uses: subhamay-bhattacharyya-gha/checkov-scan-action@main
-        id: checkov-scan
-        with:
-          iac-dir: ${{ inputs.terraform-dir }}
-          iac-framework: terraform
-          soft-fail: true
-
-      - name: Confirm SARIF file type
-        shell: bash
-        run: |
-          ls -la "${{ github.workspace }}"
-          file "${{ github.workspace }}/results.sarif"
-
-      - name: "📋 Summarize and Print Checkov Scan Report with Snippets"
-        id: summarize-report
-        uses: subhamay-bhattacharyya-gha/checkov-report-action@main
-
-  build-lambda:
-    name: 🛠️ ⛔ Lambda Package
-    if: ${{ toJSON(needs.execution-path.outputs.execution-path).lambda == true }}
-    runs-on: ubuntu-latest
-    needs: [execution-path, detect-services, detect-changes]
-    steps:
-      - name: Build and Upload Lambda Package
-        run: echo "Uploading Lambda package..."
-
-  build-lambda-layer:
-    name: 🛠️ ⛔ Lambda Layer
-    if: ${{ toJSON(needs.execution-path.outputs.execution-path)['lambda-layer'] == true }}
-    runs-on: ubuntu-latest
-    needs: [execution-path, detect-services, detect-changes]
-    steps:
-    
-      - name: Build Lambda Layer Package
-        run: echo "No changes in Lambda layer package, skipping build..."
-
-      - name: Build and Upload Lambda Layer Package
-        run: echo "Build and Upload Lambda layer...."
-
-  build-glue:
-    name: 🛠️ ⛔ Glue Script
-    if: ${{ fromJSON(needs.execution-path.outputs.execution-path).glue == true }}
-    runs-on: ubuntu-latest
-    needs: [execution-path, detect-services, detect-changes]
-    steps:
-
-      - name: Package Glue Script
-        run: echo "No changes found in Glue script, skipping build..."
-
-      - name: Package and Upload Glue Script
-        run: echo "Uploading Glue script..."
-
-  build-state-machine:
-    name: 🛠️ ⛔ State Machine
-    if: ${{ fromJSON(needs.execution-path.outputs.execution-path)['state-machine'] == true }}
-    runs-on: ubuntu-latest
-    needs: [execution-path, detect-services, detect-changes]
-    steps:
-
-      - name: Package State Machine
-        run: echo "No changes in State Machine, skipping build."
-
-      - name: Upload State Machine ASL
-        run: echo "Uploading State Machine ASL..."
-
-  yor-resource-tagging:
-    if: ${{ fromJSON(needs.execution-path.outputs.execution-path).IaC == true }}
-    name: 📋 Apply Git Metadata Tags using YOR
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    needs: [ terraform-lint, terraform-validate, checkov-scan ]
-    steps:
-      - name: Call Yor Reusable Action
-        uses: subhamay-bhattacharyya-gha/tf-yor-action@main
-        with:
-          terraform-dir: ${{ inputs.terraform-dir }}
-         
   terraform-plan:
-    if: ${{ fromJSON(needs.execution-path.outputs.execution-path).IaC == true }}
-    name: 📋 Terraform Plan
+    name: 🔍 Plan - ${{ inputs.cloud-provider }}
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    needs: [ yor-resource-tagging ]
-    steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: ${{ secrets.aws-role-arn }}
-          aws-region: ${{ vars.AWS_REGION }}
+    needs: 
+      - terraform-validate
 
-      - name: Terraform Plan
-        id: plan
+    steps:
+      - name: Terraform Plan 
         uses: subhamay-bhattacharyya-gha/tf-plan-action@main
         with:
-          terraform-dir: ${{ inputs.terraform-dir }} 
+          cloud-provider: ${{ inputs.cloud-provider }}
+          terraform-dir: infra/${{ inputs.cloud-provider }}/${{ inputs.terraform-dir }}
+          backend-type: ${{ inputs.backend-type }}
+          tfc-token: ${{ secrets.tfc-token }}
+          aws-region: ${{ inputs.aws-region }}
+          aws-role-to-assume: ${{ secrets.aws-role-to-assume }}
+          gcp-wif-provider: ${{ secrets.gcp-wif-provider }}
+          gcp-service-account: ${{ inputs.gcp-service-account }}
+          azure-client-id: ${{ secrets.azure-client-id }}
+          azure-tenant-id: ${{ secrets.azure-tenant-id }}
+          azure-subscription-id: ${{ secrets.azure-subscription-id }}
           tf-vars-file: ${{ inputs.tf-vars-file }}
-          s3-bucket: ${{ vars.TF_STATE_BUCKET_NAME }}
-          s3-region: ${{ vars.AWS_REGION }}
-          ci-pipeline: ${{ inputs.ci-pipeline }}
-
-  infra-cost:
-    if: ${{ fromJSON(needs.execution-path.outputs.execution-path).IaC == true }}
-    name: 💰 Infra Cost
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    needs: [terraform-plan]
-    steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: ${{ secrets.aws-role-arn }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Infra Cost
-        id: infra-cost
-        uses: subhamay-bhattacharyya-gha/infracost-action@main
-        with:
-          terraform-dir: ${{ inputs.terraform-dir }} 
-          ci-pipeline: ${{ inputs.ci-pipeline }}
-          s3-bucket: ${{ vars.TF_STATE_BUCKET_NAME }}
-          s3-region: ${{ vars.AWS_REGION }}
-          infracost-api-key: ${{ secrets.infracost-api-key }}
-          gist-id: ${{ secrets.infracost-gist-id }}
-          environment: ${{ inputs.environment }}
-
-  terraform-apply:
-    if: ${{ fromJSON(needs.execution-path.outputs.execution-path).IaC == true }}
-    name: 🚧 Terraform Apply
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    needs: [infra-cost]
-    steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: ${{ secrets.aws-role-arn }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Terraform Apply
-        uses: subhamay-bhattacharyya-gha/tf-apply-action@main
-        id: apply
-        with:
-          terraform-dir: ${{ inputs.terraform-dir }}
-          s3-bucket: ${{ vars.TF_STATE_BUCKET_NAME }}
-          s3-region: ${{ vars.AWS_REGION }}
-          ci-pipeline: ${{ inputs.ci-pipeline }}
-
-  terraform-destroy:
-    if: ${{ fromJSON(needs.execution-path.outputs.execution-path).IaC == true }}
-    name: ✂️ Terraform Destroy
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    needs: [terraform-apply]
-    steps:
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: ${{ secrets.aws-role-arn }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Terraform Destroy
-        uses: subhamay-bhattacharyya-gha/tf-destroy-action@main
-        id: destroy
-        with:
-          terraform-dir: ${{ inputs.terraform-dir }}
-          s3-bucket: ${{ vars.TF_STATE_BUCKET_NAME }}
-          s3-region: ${{ vars.AWS_REGION }}
-          ci-pipeline: ${{ inputs.ci-pipeline }}
-
-  create-release:
-    name: 🚀 Create Release
-    runs-on: ubuntu-latest
-    if: |
-        (needs.build-lambda.result == 'success' ||
-          needs.build-lambda-layer.result == 'success' ||
-          needs.build-glue.result == 'success' ||
-          needs.build-state-machine.result == 'success' ||
-          needs.terraform-destroy.result == 'success') &&
-          github.ref == 'refs/heads/main'
-    needs: 
-    - build-lambda
-    - build-lambda-layer
-    - build-glue
-    - build-state-machine
-    - terraform-validate
-    - terraform-lint
-    - checkov-scan
-    - infra-cost
-    - terraform-plan
-    - terraform-apply
-    - terraform-destroy
-    steps:
-      - name: Create Release
-        uses: subhamay-bhattacharyya-gha/create-release-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          tag-name: ${{ github.ref_name }}
-          release-name: Release ${{ github.ref_name }}
-          release-body: |
-            This is an automated release created by the CI pipeline.
-            It includes the latest changes from the main branch.
-          draft: false
-          prerelease: false
+          tf-plan-name: ${{ inputs.cloud-provider }}-terraform-plan
