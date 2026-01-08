@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/compare/v1.0.1...v1.0.2) (2026-01-08)
+
+
+### Bug Fixes
+
+* update Node.js version and correct package name in package-lock.json ([1982e9b](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/1982e9b68f7df4dffbd769049c5d1052dd7ac32e))
+
 ## [1.0.1](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/compare/v1.0.0...v1.0.1) (2025-07-11)
 
 
