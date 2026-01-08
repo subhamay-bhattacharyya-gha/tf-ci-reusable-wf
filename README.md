@@ -39,7 +39,6 @@ This GitHub Action provides a reusable workflow that:
 | `tflint-ver`            | TFLint version to install                                                  | ✅ Yes   | —                      |
 | `backend-type`          | Backend type: `s3` for AWS S3 or `remote` for HCP Terraform Cloud         | ❌ No    | `s3`                   |
 | `aws-region`            | AWS region for authentication (required when cloud-provider is `aws`)     | ❌ No    | —                      |
-| `gcp-service-account`   | GCP service account email for authentication (required when cloud-provider is `gcp`) | ❌ No | —                      |
 | `terraform-dir`         | Directory containing Terraform configuration files relative to cloud provider path | ❌ No | `tf`                   |
 | `tf-vars-file`          | Terraform variables file to use                                            | ❌ No    | `terraform.tfvars`     |
 
@@ -50,6 +49,7 @@ This GitHub Action provides a reusable workflow that:
 | `tfc-token`             | HCP Terraform Cloud API token                                   | `backend-type` = `remote` |
 | `aws-role-to-assume`    | AWS IAM role ARN to assume                                       | `cloud-provider` = `aws` |
 | `gcp-wif-provider`      | GCP Workload Identity Federation provider                        | `cloud-provider` = `gcp` |
+| `gcp-service-account`   | GCP service account email for authentication                     | `cloud-provider` = `gcp` |
 | `azure-client-id`       | Azure client ID for authentication                               | `cloud-provider` = `azure` |
 | `azure-tenant-id`       | Azure tenant ID for authentication                               | `cloud-provider` = `azure` |
 | `azure-subscription-id` | Azure subscription ID for authentication                         | `cloud-provider` = `azure` |
@@ -119,12 +119,12 @@ jobs:
       cloud-provider: gcp
       tflint-ver: "v0.50.0"
       backend-type: remote
-      gcp-service-account: "terraform@my-project.iam.gserviceaccount.com"
       terraform-dir: tf
       tf-vars-file: gcp.tfvars
     secrets:
       tfc-token: ${{ secrets.TFC_TOKEN }}
       gcp-wif-provider: ${{ secrets.GCP_WIF_PROVIDER }}
+      gcp-service-account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 ```
 
 ### Azure with S3 Backend

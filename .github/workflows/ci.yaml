@@ -25,12 +25,6 @@ on:
         required: false
         type: string
 
-      # GCP Authentication Inputs
-      gcp-service-account:
-        description: "GCP service account email for authentication. Required when cloud-provider is 'gcp'."
-        required: false
-        type: string
-
       # Azure Authentication Inputs
       terraform-dir:
         description: "Directory containing Terraform configuration files relative to cloud provider path"
@@ -58,6 +52,10 @@ on:
       # GCP Authentication Secret
       gcp-wif-provider:
         description: "GCP Workload Identity Federation provider. Required when cloud-provider is 'gcp'."
+        required: false
+
+      gcp-service-account:
+        description: "GCP service account email for authentication. Required when cloud-provider is 'gcp'."
         required: false
 
       # Azure Authentication Secrets
@@ -95,7 +93,7 @@ jobs:
           echo "AWS Region: ${{ inputs.aws-region }}"
           echo "AWS Role to Assume: ${{ secrets.aws-role-to-assume && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "GCP WIF Provider: ${{ secrets.gcp-wif-provider && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "GCP Service Account: ${{ inputs.gcp-service-account }}"
+          echo "GCP Service Account: ${{ secrets.gcp-service-account && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "Azure Client ID: ${{ secrets.azure-client-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "Azure Tenant ID: ${{ secrets.azure-tenant-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "Azure Subscription ID: ${{ secrets.azure-subscription-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
@@ -146,7 +144,7 @@ jobs:
           aws-region: ${{ inputs.aws-region }}
           aws-role-to-assume: ${{ secrets.aws-role-to-assume }}
           gcp-wif-provider: ${{ secrets.gcp-wif-provider }}
-          gcp-service-account: ${{ inputs.gcp-service-account }}
+          gcp-service-account: ${{ secrets.gcp-service-account }}
           azure-client-id: ${{ secrets.azure-client-id }}
           azure-tenant-id: ${{ secrets.azure-tenant-id }}
           azure-subscription-id: ${{ secrets.azure-subscription-id }}
