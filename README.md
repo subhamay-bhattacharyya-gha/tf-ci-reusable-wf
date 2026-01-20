@@ -2,7 +2,7 @@
 
 ![Release](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/actions/workflows/release.yaml/badge.svg)&nbsp;![Commit Activity](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![File Count](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Top Language](https://img.shields.io/github/languages/top/subhamay-bhattacharyya-gha/tf-ci-reusable-wf)&nbsp;![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/c09973adc852b754ba9bdae2ebce9678/raw/tf-ci-reusable-wf.json?)
 
-A reusable GitHub Actions workflow for running Terraform CI pipelines across multiple cloud providers (AWS, GCP, Azure). This workflow performs linting, validation, and planning with support for multiple backend types and authentication methods.
+A reusable GitHub Actions workflow for running Terraform CI pipelines across multiple cloud providers (AWS, GCP, Azure, Snowflake). This workflow performs linting, validation, and planning with support for multiple backend types and authentication methods.
 
 ---
 
@@ -10,7 +10,7 @@ A reusable GitHub Actions workflow for running Terraform CI pipelines across mul
 
 This GitHub Action provides a reusable workflow that:
 
-- **Multi-cloud support**: Works with AWS, GCP, and Azure infrastructure
+- **Multi-cloud support**: Works with AWS, GCP, Azure, and Snowflake infrastructure
 - **Terraform linting**: Uses TFLint for code quality checks
 - **Terraform validation**: Validates configuration syntax and consistency
 - **Terraform planning**: Generates execution plans for infrastructure changes
@@ -35,10 +35,13 @@ This GitHub Action provides a reusable workflow that:
 
 | Name                    | Description                                                                 | Required | Default               |
 |-------------------------|-----------------------------------------------------------------------------|----------|------------------------|
-| `cloud-provider`        | Target cloud provider (`aws`, `gcp`, `azure`)                             | ✅ Yes   | —                      |
+| `cloud-provider`        | Target cloud provider (`aws`, `gcp`, `azure`, `snowflake`)               | ✅ Yes   | —                      |
 | `tflint-ver`            | TFLint version to install                                                  | ✅ Yes   | —                      |
 | `backend-type`          | Backend type: `s3` for AWS S3 or `remote` for HCP Terraform Cloud         | ❌ No    | `s3`                   |
 | `aws-region`            | AWS region for authentication (required when cloud-provider is `aws`)     | ❌ No    | —                      |
+| `snowflake-account`     | Snowflake account identifier (required when cloud-provider is `snowflake`) | ❌ No   | —                      |
+| `snowflake-user`        | Snowflake user name (required when cloud-provider is `snowflake`)         | ❌ No    | —                      |
+| `snowflake-role`        | Snowflake role name (required when cloud-provider is `snowflake`)         | ❌ No    | —                      |
 | `terraform-dir`         | Directory containing Terraform configuration files relative to cloud provider path | ❌ No | `tf`                   |
 | `tf-vars-file`          | Terraform variables file to use                                            | ❌ No    | `terraform.tfvars`     |
 
@@ -50,6 +53,7 @@ This GitHub Action provides a reusable workflow that:
 | `aws-role-to-assume`    | AWS IAM role ARN to assume                                       | `cloud-provider` = `aws` |
 | `gcp-wif-provider`      | GCP Workload Identity Federation provider                        | `cloud-provider` = `gcp` |
 | `gcp-service-account`   | GCP service account email for authentication                     | `cloud-provider` = `gcp` |
+| `snowflake-private-key` | Snowflake private key for authentication                         | `cloud-provider` = `snowflake` |
 | `azure-client-id`       | Azure client ID for authentication                               | `cloud-provider` = `azure` |
 | `azure-tenant-id`       | Azure tenant ID for authentication                               | `cloud-provider` = `azure` |
 | `azure-subscription-id` | Azure subscription ID for authentication                         | `cloud-provider` = `azure` |
@@ -153,6 +157,33 @@ jobs:
       azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 ```
 
+### Snowflake with S3 Backend
+
+```yaml
+name: Terraform CI - Snowflake
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  terraform-ci:
+    uses: subhamay-bhattacharyya-gha/tf-ci-reusable-wf/.github/workflows/ci.yaml@main
+    with:
+      cloud-provider: snowflake
+      tflint-ver: "v0.50.0"
+      backend-type: s3
+      snowflake-account: "my-account"
+      snowflake-user: "terraform_user"
+      snowflake-role: "TERRAFORM_ROLE"
+      terraform-dir: tf
+      tf-vars-file: snowflake.tfvars
+    secrets:
+      snowflake-private-key: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+```
+
 ## 🏗️ Directory Structure
 
 The workflow expects your repository to follow this structure:
@@ -164,8 +195,10 @@ your-repo/
 │   │   └── tf/          # AWS Terraform files
 │   ├── gcp/
 │   │   └── tf/          # GCP Terraform files
-│   └── azure/
-│       └── tf/          # Azure Terraform files
+│   ├── azure/
+│   │   └── tf/          # Azure Terraform files
+│   └── snowflake/
+│       └── tf/          # Snowflake Terraform files
 └── .github/
     └── workflows/
         └── main.yaml    # Your workflow that calls this reusable workflow

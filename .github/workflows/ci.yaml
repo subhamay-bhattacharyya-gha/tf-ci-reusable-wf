@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       cloud-provider:
-        description: "Target cloud provider (aws, gcp, azure)"
+        description: "Target cloud provider (aws, gcp, azure, snowflake)"
         required: true
         type: string
       tflint-ver:
@@ -22,6 +22,22 @@ on:
       # AWS Authentication Inputs
       aws-region:
         description: "AWS region for authentication. Required when cloud-provider is 'aws'."
+        required: false
+        type: string
+
+      # Snowflake Authentication Inputs
+      snowflake-account:
+        description: "Snowflake account identifier. Required when cloud-provider is 'snowflake'."
+        required: false
+        type: string
+
+      snowflake-user:
+        description: "Snowflake user name. Required when cloud-provider is 'snowflake'."
+        required: false
+        type: string
+
+      snowflake-role:
+        description: "Snowflake role name. Required when cloud-provider is 'snowflake'."
         required: false
         type: string
 
@@ -56,6 +72,11 @@ on:
 
       gcp-service-account:
         description: "GCP service account email for authentication. Required when cloud-provider is 'gcp'."
+        required: false
+
+      # Snowflake Authentication Secret
+      snowflake-private-key:
+        description: "Snowflake private key for authentication. Required when cloud-provider is 'snowflake'."
         required: false
 
       # Azure Authentication Secrets
@@ -101,8 +122,8 @@ jobs:
 
       - name: Validate Cloud Provider
         run: |
-          if [[ "${{ inputs.cloud-provider }}" != "aws" && "${{ inputs.cloud-provider }}" != "gcp" && "${{ inputs.cloud-provider }}" != "azure" ]]; then
-            echo "Error: Invalid cloud provider '${{ inputs.cloud-provider }}'. Must be one of: aws, gcp, azure"
+          if [[ "${{ inputs.cloud-provider }}" != "aws" && "${{ inputs.cloud-provider }}" != "gcp" && "${{ inputs.cloud-provider }}" != "azure" && "${{ inputs.cloud-provider }}" != "snowflake" ]]; then
+            echo "Error: Invalid cloud provider '${{ inputs.cloud-provider }}'. Must be one of: aws, gcp, azure, snowflake"
             exit 1
           fi
           echo "Valid cloud provider: ${{ inputs.cloud-provider }}"
@@ -145,6 +166,10 @@ jobs:
           aws-role-to-assume: ${{ secrets.aws-role-to-assume }}
           gcp-wif-provider: ${{ secrets.gcp-wif-provider }}
           gcp-service-account: ${{ secrets.gcp-service-account }}
+          snowflake-account: ${{ inputs.snowflake-account }}
+          snowflake-user: ${{ inputs.snowflake-user }}
+          snowflake-role: ${{ inputs.snowflake-role }}
+          snowflake-private-key: ${{ secrets.snowflake-private-key }}
           azure-client-id: ${{ secrets.azure-client-id }}
           azure-tenant-id: ${{ secrets.azure-tenant-id }}
           azure-subscription-id: ${{ secrets.azure-subscription-id }}
