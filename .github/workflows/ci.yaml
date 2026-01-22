@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       cloud-provider:
-        description: "Target cloud provider (aws, gcp, azure, snowflake)"
+        description: "Target cloud provider (aws, gcp, azure, snowflake, databricks)"
         required: true
         type: string
       tflint-ver:
@@ -79,6 +79,15 @@ on:
         description: "Snowflake private key for authentication. Required when cloud-provider is 'snowflake'."
         required: false
 
+      # Databricks Authentication Secrets
+      databricks-host:
+        description: "Databricks workspace URL. Required when cloud-provider is 'databricks'."
+        required: false
+
+      databricks-token:
+        description: "Databricks personal access token. Required when cloud-provider is 'databricks'."
+        required: false
+
       # Azure Authentication Secrets
       azure-client-id:
         description: "Azure client ID for authentication. Required when cloud-provider is 'azure'."
@@ -115,6 +124,12 @@ jobs:
           echo "AWS Role to Assume: ${{ secrets.aws-role-to-assume && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "GCP WIF Provider: ${{ secrets.gcp-wif-provider && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "GCP Service Account: ${{ secrets.gcp-service-account && '[PROVIDED]' || '[NOT PROVIDED]' }}"
+          echo "Snowflake Account: ${{ inputs.snowflake-account }}"
+          echo "Snowflake User: ${{ inputs.snowflake-user }}"
+          echo "Snowflake Role: ${{ inputs.snowflake-role }}"
+          echo "Snowflake Private Key: ${{ secrets.snowflake-private-key && '[PROVIDED]' || '[NOT PROVIDED]' }}"
+          echo "Databricks Host: ${{ secrets.databricks-host && '[PROVIDED]' || '[NOT PROVIDED]' }}"
+          echo "Databricks Token: ${{ secrets.databricks-token && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "Azure Client ID: ${{ secrets.azure-client-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "Azure Tenant ID: ${{ secrets.azure-tenant-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "Azure Subscription ID: ${{ secrets.azure-subscription-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
@@ -122,11 +137,96 @@ jobs:
 
       - name: Validate Cloud Provider
         run: |
-          if [[ "${{ inputs.cloud-provider }}" != "aws" && "${{ inputs.cloud-provider }}" != "gcp" && "${{ inputs.cloud-provider }}" != "azure" && "${{ inputs.cloud-provider }}" != "snowflake" ]]; then
-            echo "Error: Invalid cloud provider '${{ inputs.cloud-provider }}'. Must be one of: aws, gcp, azure, snowflake"
+          # Validate cloud provider value
+          if [[ "${{ inputs.cloud-provider }}" != "aws" && "${{ inputs.cloud-provider }}" != "gcp" && "${{ inputs.cloud-provider }}" != "azure" && "${{ inputs.cloud-provider }}" != "snowflake" && "${{ inputs.cloud-provider }}" != "databricks" ]]; then
+            echo "Error: Invalid cloud provider '${{ inputs.cloud-provider }}'. Must be one of: aws, gcp, azure, snowflake, databricks"
             exit 1
           fi
           echo "Valid cloud provider: ${{ inputs.cloud-provider }}"
+          
+          # Validate AWS requirements
+          if [[ "${{ inputs.cloud-provider }}" == "aws" ]]; then
+            echo "Validating AWS requirements..."
+            if [[ -z "${{ inputs.aws-region }}" ]]; then
+              echo "Error: aws-region is required when cloud-provider is 'aws'"
+              exit 1
+            fi
+            if [[ -z "${{ secrets.aws-role-to-assume }}" ]]; then
+              echo "Error: aws-role-to-assume secret is required when cloud-provider is 'aws'"
+              exit 1
+            fi
+            echo "✓ AWS requirements validated"
+          fi
+          
+          # Validate GCP requirements
+          if [[ "${{ inputs.cloud-provider }}" == "gcp" ]]; then
+            echo "Validating GCP requirements..."
+            if [[ -z "${{ secrets.gcp-wif-provider }}" ]]; then
+              echo "Error: gcp-wif-provider secret is required when cloud-provider is 'gcp'"
+              exit 1
+            fi
+            if [[ -z "${{ secrets.gcp-service-account }}" ]]; then
+              echo "Error: gcp-service-account secret is required when cloud-provider is 'gcp'"
+              exit 1
+            fi
+            echo "✓ GCP requirements validated"
+          fi
+          
+          # Validate Azure requirements
+          if [[ "${{ inputs.cloud-provider }}" == "azure" ]]; then
+            echo "Validating Azure requirements..."
+            if [[ -z "${{ secrets.azure-client-id }}" ]]; then
+              echo "Error: azure-client-id secret is required when cloud-provider is 'azure'"
+              exit 1
+            fi
+            if [[ -z "${{ secrets.azure-tenant-id }}" ]]; then
+              echo "Error: azure-tenant-id secret is required when cloud-provider is 'azure'"
+              exit 1
+            fi
+            if [[ -z "${{ secrets.azure-subscription-id }}" ]]; then
+              echo "Error: azure-subscription-id secret is required when cloud-provider is 'azure'"
+              exit 1
+            fi
+            echo "✓ Azure requirements validated"
+          fi
+          
+          # Validate Snowflake requirements
+          if [[ "${{ inputs.cloud-provider }}" == "snowflake" ]]; then
+            echo "Validating Snowflake requirements..."
+            if [[ -z "${{ inputs.snowflake-account }}" ]]; then
+              echo "Error: snowflake-account is required when cloud-provider is 'snowflake'"
+              exit 1
+            fi
+            if [[ -z "${{ inputs.snowflake-user }}" ]]; then
+              echo "Error: snowflake-user is required when cloud-provider is 'snowflake'"
+              exit 1
+            fi
+            if [[ -z "${{ inputs.snowflake-role }}" ]]; then
+              echo "Error: snowflake-role is required when cloud-provider is 'snowflake'"
+              exit 1
+            fi
+            if [[ -z "${{ secrets.snowflake-private-key }}" ]]; then
+              echo "Error: snowflake-private-key secret is required when cloud-provider is 'snowflake'"
+              exit 1
+            fi
+            echo "✓ Snowflake requirements validated"
+          fi
+          
+          # Validate Databricks requirements
+          if [[ "${{ inputs.cloud-provider }}" == "databricks" ]]; then
+            echo "Validating Databricks requirements..."
+            if [[ -z "${{ secrets.databricks-host }}" ]]; then
+              echo "Error: databricks-host secret is required when cloud-provider is 'databricks'"
+              exit 1
+            fi
+            if [[ -z "${{ secrets.databricks-token }}" ]]; then
+              echo "Error: databricks-token secret is required when cloud-provider is 'databricks'"
+              exit 1
+            fi
+            echo "✓ Databricks requirements validated"
+          fi
+          
+          echo "All validations passed successfully!"
 
       - name: Run TFLint
         uses: subhamay-bhattacharyya-gha/tf-lint-action@main
@@ -170,6 +270,8 @@ jobs:
           snowflake-user: ${{ inputs.snowflake-user }}
           snowflake-role: ${{ inputs.snowflake-role }}
           snowflake-private-key: ${{ secrets.snowflake-private-key }}
+          databricks-host: ${{ secrets.databricks-host }}
+          databricks-token: ${{ secrets.databricks-token }}
           azure-client-id: ${{ secrets.azure-client-id }}
           azure-tenant-id: ${{ secrets.azure-tenant-id }}
           azure-subscription-id: ${{ secrets.azure-subscription-id }}
