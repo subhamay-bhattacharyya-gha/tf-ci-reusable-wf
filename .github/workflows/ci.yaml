@@ -3,6 +3,7 @@ name: Terraform Multi-Cloud CI Build
 on:
   workflow_call:
     inputs:
+      # Cloud Provider Selection
       cloud-provider:
         description: "Target cloud provider (aws, gcp, azure, snowflake, databricks)"
         required: true
@@ -11,6 +12,11 @@ on:
         description: "TFLint version to install"
         required: true
         type: string
+      terraform-dir:
+        description: "Directory containing Terraform configuration files relative to cloud provider path"
+        required: false
+        type: string
+        default: "tf"
 
       # Backend Type Selection
       backend-type:
@@ -41,13 +47,6 @@ on:
         required: false
         type: string
 
-      # Azure Authentication Inputs
-      terraform-dir:
-        description: "Directory containing Terraform configuration files relative to cloud provider path"
-        required: false
-        type: string
-        default: "tf"
-      
       # Terraform artifacts
       tf-vars-file:
         description: "Optional Terraform variable file"
@@ -135,7 +134,9 @@ jobs:
           echo "Azure Subscription ID: ${{ secrets.azure-subscription-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "======================="
 
-      - name: Validate Cloud Provider
+      # Validate input configuration
+      #############################################
+      - name: Validate Input Configuration
         run: |
           # Validate cloud provider value
           if [[ "${{ inputs.cloud-provider }}" != "aws" && "${{ inputs.cloud-provider }}" != "gcp" && "${{ inputs.cloud-provider }}" != "azure" && "${{ inputs.cloud-provider }}" != "snowflake" && "${{ inputs.cloud-provider }}" != "databricks" ]]; then
