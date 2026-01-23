@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/compare/v1.0.2...v1.0.3) (2026-01-23)
+
+
+### Bug Fixes
+
+* update terraform plan action to use main branch ([06b0131](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/06b01316fd286768bee7cbed1e741d0bf114e12b))
+
 ## [1.0.2](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/compare/v1.0.1...v1.0.2) (2026-01-08)
 
 
