@@ -19,11 +19,6 @@ on:
         description: "TFLint version to install"
         required: true
         type: string
-      terraform-dir:
-        description: "Directory containing Terraform configuration files relative to cloud provider path"
-        required: false
-        type: string
-        default: "tf"
 
       # Backend Type Selection
       backend-type:
@@ -147,7 +142,6 @@ jobs:
           echo "=== DEBUG: Workflow Inputs ==="
           echo "backend-type: ${{ inputs.backend-type }}"
           echo "cloud-provider: ${{ inputs.cloud-provider }}"
-          echo "terraform-dir: infra/${{ inputs.cloud-provider }}/tf"
           echo "tflint-ver: ${{ inputs.tflint-ver }}"
           echo "tf-vars-file: ${{ inputs.tf-vars-file }}"
           echo ""
@@ -311,9 +305,9 @@ jobs:
           esac
 
       - name: Run TFLint
-        uses: subhamay-bhattacharyya-gha/tf-lint-action@main
+        uses: subhamay-bhattacharyya-gha/tf-lint-action@feature/GHA-0032-rename-github-action-inpu
         with:
-          terraform-dir: infra/${{ inputs.cloud-provider }}/tf
+          tf-config-path: infra/${{ inputs.cloud-provider }}/tf
           tflint-ver: ${{ inputs.tflint-ver }}
           use-cache: "true"
           tflint-format: "compact"
@@ -326,9 +320,9 @@ jobs:
 
     steps:
       - name: Terraform Validate 
-        uses: subhamay-bhattacharyya-gha/tf-validate-action@main
+        uses: subhamay-bhattacharyya-gha/tf-validate-action@feature/GHA-0042-rename-github-action-inpu
         with:
-          terraform-dir: infra/${{ inputs.cloud-provider }}/tf
+          tf-config-path: infra/${{ inputs.cloud-provider }}/tf
 
   terraform-plan:
     name: 🔍 Plan
@@ -349,7 +343,7 @@ jobs:
           SNOWFLAKE_PRIVATE_KEY: ${{ secrets.snowflake-private-key }}
         with:
           cloud-provider: ${{ inputs.cloud-provider }}
-          terraform-dir: infra/${{ inputs.cloud-provider }}/tf
+          tf-config-path: infra/${{ inputs.cloud-provider }}/tf
           backend-type: ${{ inputs.backend-type }}
           s3-bucket: ${{ inputs.s3-bucket }}
           s3-region: ${{ inputs.s3-region }}
