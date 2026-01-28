@@ -312,7 +312,7 @@ jobs:
 
     steps:
       - name: Terraform Plan 
-        uses: subhamay-bhattacharyya-gha/tf-plan-action@main
+        uses: subhamay-bhattacharyya-gha/tf-plan-action@feature/GHA-0047-add-platform-based-multi
         env:
           DATABRICKS_HOST: ${{ secrets.databricks-host }}
           DATABRICKS_TOKEN: ${{ secrets.databricks-token }}
