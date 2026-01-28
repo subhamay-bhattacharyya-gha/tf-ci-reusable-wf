@@ -285,7 +285,6 @@ jobs:
           esac
 
       - name: Run TFLint
-        if: inputs.cloud-provider != 'platform'
         uses: subhamay-bhattacharyya-gha/tf-lint-action@main
         with:
           terraform-dir: infra/${{ inputs.cloud-provider }}/tf
@@ -293,121 +292,27 @@ jobs:
           use-cache: "true"
           tflint-format: "compact"
 
-      - name: Run TFLint (Platform Mode)
-        if: inputs.cloud-provider == 'platform'
-        shell: bash
-        run: |
-          echo "Running TFLint for all detected platform directories..."
-          PROVIDERS=("aws" "gcp" "azure" "snowflake" "databricks")
-          for provider in "${PROVIDERS[@]}"; do
-            if [[ -d "infra/${provider}/tf" ]]; then
-              echo "Running TFLint for ${provider}..."
-              # TFLint will be run by the action for each provider
-            fi
-          done
-
-      - name: TFLint - AWS
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/aws/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-lint-action@main
-        with:
-          terraform-dir: infra/aws/tf
-          tflint-ver: ${{ inputs.tflint-ver }}
-          use-cache: "true"
-          tflint-format: "compact"
-
-      - name: TFLint - GCP
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/gcp/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-lint-action@main
-        with:
-          terraform-dir: infra/gcp/tf
-          tflint-ver: ${{ inputs.tflint-ver }}
-          use-cache: "true"
-          tflint-format: "compact"
-
-      - name: TFLint - Azure
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/azure/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-lint-action@main
-        with:
-          terraform-dir: infra/azure/tf
-          tflint-ver: ${{ inputs.tflint-ver }}
-          use-cache: "true"
-          tflint-format: "compact"
-
-      - name: TFLint - Snowflake
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/snowflake/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-lint-action@main
-        with:
-          terraform-dir: infra/snowflake/tf
-          tflint-ver: ${{ inputs.tflint-ver }}
-          use-cache: "true"
-          tflint-format: "compact"
-
-      - name: TFLint - Databricks
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/databricks/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-lint-action@main
-        with:
-          terraform-dir: infra/databricks/tf
-          tflint-ver: ${{ inputs.tflint-ver }}
-          use-cache: "true"
-          tflint-format: "compact"
-
   terraform-validate:
-    name: ✅ Validate - ${{ inputs.cloud-provider }}
+    name: ✅ Validate
     runs-on: ubuntu-latest
     needs: 
       - terraform-lint
 
     steps:
       - name: Terraform Validate 
-        if: inputs.cloud-provider != 'platform'
         uses: subhamay-bhattacharyya-gha/tf-validate-action@main
         with:
           terraform-dir: infra/${{ inputs.cloud-provider }}/tf
 
-      - name: Checkout Repository (Platform Mode)
-        if: inputs.cloud-provider == 'platform'
-        uses: actions/checkout@v4
-
-      - name: Terraform Validate - AWS
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/aws/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-validate-action@main
-        with:
-          terraform-dir: infra/aws/tf
-
-      - name: Terraform Validate - GCP
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/gcp/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-validate-action@main
-        with:
-          terraform-dir: infra/gcp/tf
-
-      - name: Terraform Validate - Azure
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/azure/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-validate-action@main
-        with:
-          terraform-dir: infra/azure/tf
-
-      - name: Terraform Validate - Snowflake
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/snowflake/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-validate-action@main
-        with:
-          terraform-dir: infra/snowflake/tf
-
-      - name: Terraform Validate - Databricks
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/databricks/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-validate-action@main
-        with:
-          terraform-dir: infra/databricks/tf
-
   terraform-plan:
-    name: 🔍 Plan - ${{ inputs.cloud-provider }}
+    name: 🔍 Plan
     runs-on: ubuntu-latest
     needs: 
       - terraform-validate
 
     steps:
       - name: Terraform Plan 
-        if: inputs.cloud-provider != 'platform'
-        uses: subhamay-bhattacharyya-gha/tf-plan-action@feature/GHA-0047-add-platform-based-multi
+        uses: subhamay-bhattacharyya-gha/tf-plan-action@main
         env:
           DATABRICKS_HOST: ${{ secrets.databricks-host }}
           DATABRICKS_TOKEN: ${{ secrets.databricks-token }}
@@ -430,88 +335,4 @@ jobs:
           azure-client-id: ${{ secrets.azure-client-id }}
           azure-tenant-id: ${{ secrets.azure-tenant-id }}
           azure-subscription-id: ${{ secrets.azure-subscription-id }}
-          tf-vars-file: ${{ inputs.tf-vars-file }}
-
-      - name: Checkout Repository (Platform Mode)
-        if: inputs.cloud-provider == 'platform'
-        uses: actions/checkout@v4
-
-      - name: Terraform Plan - AWS
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/aws/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-plan-action@feature/GHA-0047-add-platform-based-multi
-        with:
-          cloud-provider: aws
-          terraform-dir: infra/aws/tf
-          backend-type: ${{ inputs.backend-type }}
-          s3-bucket: ${{ inputs.s3-bucket }}
-          s3-region: ${{ inputs.s3-region }}
-          s3-key-prefix: ${{ inputs.s3-key-prefix }}
-          tfc-token: ${{ secrets.tfc-token }}
-          aws-region: ${{ inputs.aws-region }}
-          aws-role-to-assume: ${{ secrets.aws-role-to-assume }}
-          tf-vars-file: ${{ inputs.tf-vars-file }}
-
-      - name: Terraform Plan - GCP
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/gcp/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-plan-action@feature/GHA-0047-add-platform-based-multi
-        with:
-          cloud-provider: gcp
-          terraform-dir: infra/gcp/tf
-          backend-type: ${{ inputs.backend-type }}
-          s3-bucket: ${{ inputs.s3-bucket }}
-          s3-region: ${{ inputs.s3-region }}
-          s3-key-prefix: ${{ inputs.s3-key-prefix }}
-          tfc-token: ${{ secrets.tfc-token }}
-          gcp-wif-provider: ${{ secrets.gcp-wif-provider }}
-          gcp-service-account: ${{ secrets.gcp-service-account }}
-          tf-vars-file: ${{ inputs.tf-vars-file }}
-
-      - name: Terraform Plan - Azure
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/azure/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-plan-action@feature/GHA-0047-add-platform-based-multi
-        with:
-          cloud-provider: azure
-          terraform-dir: infra/azure/tf
-          backend-type: ${{ inputs.backend-type }}
-          s3-bucket: ${{ inputs.s3-bucket }}
-          s3-region: ${{ inputs.s3-region }}
-          s3-key-prefix: ${{ inputs.s3-key-prefix }}
-          tfc-token: ${{ secrets.tfc-token }}
-          azure-client-id: ${{ secrets.azure-client-id }}
-          azure-tenant-id: ${{ secrets.azure-tenant-id }}
-          azure-subscription-id: ${{ secrets.azure-subscription-id }}
-          tf-vars-file: ${{ inputs.tf-vars-file }}
-
-      - name: Terraform Plan - Snowflake
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/snowflake/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-plan-action@feature/GHA-0047-add-platform-based-multi
-        env:
-          SNOWFLAKE_ACCOUNT: ${{ inputs.snowflake-account }}
-          SNOWFLAKE_USER: ${{ inputs.snowflake-user }}
-          SNOWFLAKE_ROLE: ${{ inputs.snowflake-role }}
-          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.snowflake-private-key }}
-        with:
-          cloud-provider: snowflake
-          terraform-dir: infra/snowflake/tf
-          backend-type: ${{ inputs.backend-type }}
-          s3-bucket: ${{ inputs.s3-bucket }}
-          s3-region: ${{ inputs.s3-region }}
-          s3-key-prefix: ${{ inputs.s3-key-prefix }}
-          tfc-token: ${{ secrets.tfc-token }}
-          tf-vars-file: ${{ inputs.tf-vars-file }}
-
-      - name: Terraform Plan - Databricks
-        if: inputs.cloud-provider == 'platform' && hashFiles('infra/databricks/tf') != ''
-        uses: subhamay-bhattacharyya-gha/tf-plan-action@feature/GHA-0047-add-platform-based-multi
-        env:
-          DATABRICKS_HOST: ${{ secrets.databricks-host }}
-          DATABRICKS_TOKEN: ${{ secrets.databricks-token }}
-        with:
-          cloud-provider: databricks
-          terraform-dir: infra/databricks/tf
-          backend-type: ${{ inputs.backend-type }}
-          s3-bucket: ${{ inputs.s3-bucket }}
-          s3-region: ${{ inputs.s3-region }}
-          s3-key-prefix: ${{ inputs.s3-key-prefix }}
-          tfc-token: ${{ secrets.tfc-token }}
           tf-vars-file: ${{ inputs.tf-vars-file }}
