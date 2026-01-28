@@ -46,7 +46,8 @@ This GitHub Action provides a reusable workflow that:
 | `s3-region`             | AWS region for S3 bucket (required when backend-type is `s3`)             | ❌ No    | —                      |
 | `s3-key-prefix`         | S3 key prefix for Terraform state file (required when backend-type is `s3`) | ❌ No  | —                      |
 | `aws-region`            | AWS region for authentication (required when cloud-provider is `aws`)     | ❌ No    | —                      |
-| `snowflake-account`     | Snowflake account identifier (required when cloud-provider is `snowflake`) | ❌ No   | —                      |
+| `snowflake-organization-name`    | Snowflake organization name (required when cloud-provider is `snowflake`) | ❌ No   | —                      |
+| `snowflake-account-name`| Snowflake account name (required when cloud-provider is `snowflake`) | ❌ No   | —                      |
 | `snowflake-user`        | Snowflake user name (required when cloud-provider is `snowflake`)         | ❌ No    | —                      |
 | `snowflake-role`        | Snowflake role name (required when cloud-provider is `snowflake`)         | ❌ No    | —                      |
 | `terraform-dir`         | Directory containing Terraform configuration files relative to cloud provider path | ❌ No | `tf`                   |
@@ -129,7 +130,8 @@ jobs:
       s3-region: "us-east-1"
       s3-key-prefix: "terraform/state"
       aws-region: us-east-1
-      snowflake-account: "my-account"
+      snowflake-organization-name: "my-org"
+      snowflake-account-name: "my-account"
       snowflake-user: "terraform_user"
       snowflake-role: "TERRAFORM_ROLE"
     secrets:
@@ -249,7 +251,8 @@ jobs:
       s3-bucket: "my-terraform-state-bucket"
       s3-region: "us-east-1"
       s3-key-prefix: "snowflake/terraform"
-      snowflake-account: "my-account"
+      snowflake-organization-name: "my-org"
+      snowflake-account-name: "my-account"
       snowflake-user: "terraform_user"
       snowflake-role: "TERRAFORM_ROLE"
       tf-vars-file: snowflake.tfvars
@@ -323,7 +326,7 @@ The workflow performs comprehensive input validation before execution:
 - **AWS**: Requires `aws-region` and `aws-role-to-assume`
 - **GCP**: Requires `gcp-wif-provider` and `gcp-service-account`
 - **Azure**: Requires `azure-client-id`, `azure-tenant-id`, and `azure-subscription-id`
-- **Snowflake**: Requires `snowflake-account`, `snowflake-user`, `snowflake-role`, and `snowflake-private-key`
+- **Snowflake**: Requires `snowflake-organization-name`, `snowflake-account-name`, `snowflake-user`, `snowflake-role`, and `snowflake-private-key`
 - **Databricks**: Requires `databricks-host` and `databricks-token`
 - **Platform**: Validates inputs only for detected provider directories
 
