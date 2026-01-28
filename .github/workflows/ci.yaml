@@ -3,6 +3,13 @@ name: Terraform Multi-Cloud CI Build
 on:
   workflow_call:
     inputs:
+      # Concurrency group name (optional - allows caller to customize)
+      concurrency-group:
+        description: "Concurrency group name for workflow runs"
+        required: false
+        type: string
+        default: ""
+
       # Cloud Provider Selection
       cloud-provider:
         description: "Target cloud provider or platform (aws, gcp, azure, snowflake, databricks, platform)"
@@ -120,9 +127,13 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: ${{ inputs.concurrency-group || format('terraform-ci-{0}-{1}', inputs.cloud-provider, github.ref) }}
+  cancel-in-progress: true
+
 jobs:
   terraform-lint:
-    name: ⚙️ TFLint
+    name: ⚙️ TFLint - ${{ inputs.cloud-provider }}
     runs-on: ubuntu-latest
     
     steps:
