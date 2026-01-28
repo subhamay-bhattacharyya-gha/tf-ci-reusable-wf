@@ -139,30 +139,39 @@ jobs:
     steps:
       - name: Print Inputs
         run: |
-          echo "=== Workflow Inputs ==="
-          echo "Cloud Provider: ${{ inputs.cloud-provider }}"
-          echo "TFLint Version: ${{ inputs.tflint-ver }}"
-          echo "Backend Type: ${{ inputs.backend-type }}"
-          echo "S3 Bucket: ${{ inputs.s3-bucket }}"
-          echo "S3 Region: ${{ inputs.s3-region }}"
-          echo "S3 Key Prefix: ${{ inputs.s3-key-prefix }}"
-          echo "Terraform Directory: ${{ inputs.terraform-dir }}"
-          echo "TF Vars File: ${{ inputs.tf-vars-file }}"
-          echo "TFC Token: ${{ secrets.tfc-token && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "AWS Region: ${{ inputs.aws-region }}"
-          echo "AWS Role to Assume: ${{ secrets.aws-role-to-assume && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "GCP WIF Provider: ${{ secrets.gcp-wif-provider && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "GCP Service Account: ${{ secrets.gcp-service-account && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Snowflake Account: ${{ inputs.snowflake-account }}"
-          echo "Snowflake User: ${{ inputs.snowflake-user }}"
-          echo "Snowflake Role: ${{ inputs.snowflake-role }}"
-          echo "Snowflake Private Key: ${{ secrets.snowflake-private-key && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Databricks Host: ${{ secrets.databricks-host && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Databricks Token: ${{ secrets.databricks-token && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Azure Client ID: ${{ secrets.azure-client-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Azure Tenant ID: ${{ secrets.azure-tenant-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Azure Subscription ID: ${{ secrets.azure-subscription-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "======================="
+          echo "=== DEBUG: Workflow Inputs ==="
+          echo "backend-type: ${{ inputs.backend-type }}"
+          echo "cloud-provider: ${{ inputs.cloud-provider }}"
+          echo "terraform-dir: infra/${{ inputs.cloud-provider }}/tf"
+          echo "tflint-ver: ${{ inputs.tflint-ver }}"
+          echo "tf-vars-file: ${{ inputs.tf-vars-file }}"
+          echo ""
+          echo "=== HCP Terraform Cloud Inputs ==="
+          echo "tfc-token: [REDACTED - $(if [[ -n '${{ secrets.tfc-token }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo ""
+          echo "=== AWS Authentication Inputs ==="
+          echo "aws-region: ${{ inputs.aws-region }}"
+          echo "aws-role-to-assume: [REDACTED - $(if [[ -n '${{ secrets.aws-role-to-assume }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo ""
+          echo "=== GCP Authentication Inputs ==="
+          echo "gcp-wif-provider: [REDACTED - $(if [[ -n '${{ secrets.gcp-wif-provider }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "gcp-service-account: [REDACTED - $(if [[ -n '${{ secrets.gcp-service-account }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo ""
+          echo "=== Azure Authentication Inputs ==="
+          echo "azure-client-id: [REDACTED - $(if [[ -n '${{ secrets.azure-client-id }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "azure-tenant-id: [REDACTED - $(if [[ -n '${{ secrets.azure-tenant-id }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "azure-subscription-id: [REDACTED - $(if [[ -n '${{ secrets.azure-subscription-id }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo ""
+          echo "=== Snowflake Authentication Inputs ==="
+          echo "snowflake-account: [REDACTED - $(if [[ -n '${{ inputs.snowflake-account }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "snowflake-user: [REDACTED - $(if [[ -n '${{ inputs.snowflake-user }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "snowflake-role: [REDACTED - $(if [[ -n '${{ inputs.snowflake-role }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "snowflake-private-key: [REDACTED - $(if [[ -n '${{ secrets.snowflake-private-key }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo ""
+          echo "=== Databricks Authentication Inputs ==="
+          echo "databricks-host: [REDACTED - $(if [[ -n '${{ secrets.databricks-host }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "databricks-token: [REDACTED - $(if [[ -n '${{ secrets.databricks-token }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "================================="
 
       # Validate input configuration
       #############################################
@@ -175,14 +184,14 @@ jobs:
             echo "Error: Invalid backend-type '${{ inputs.backend-type }}'. Must be either 's3' or 'remote'"
             exit 1
           fi
-          echo "✓ Valid backend-type: ${{ inputs.backend-type }}"
+          echo "✅ Valid backend-type: ${{ inputs.backend-type }}"
 
           # Validate cloud-provider input
           if [[ "${{ inputs.cloud-provider }}" != "aws" && "${{ inputs.cloud-provider }}" != "gcp" && "${{ inputs.cloud-provider }}" != "azure" && "${{ inputs.cloud-provider }}" != "snowflake" && "${{ inputs.cloud-provider }}" != "databricks" && "${{ inputs.cloud-provider }}" != "platform" ]]; then
             echo "Error: Invalid cloud-provider '${{ inputs.cloud-provider }}'. Must be one of: aws, gcp, azure, snowflake, databricks, platform"
             exit 1
           fi
-          echo "✓ Valid cloud-provider: ${{ inputs.cloud-provider }}"
+          echo "✅ Valid cloud-provider: ${{ inputs.cloud-provider }}"
 
           # Validate backend configuration
           if [[ "${{ inputs.backend-type }}" == "s3" ]]; then
@@ -240,7 +249,7 @@ jobs:
                 if [[ -z "${{ inputs.aws-region }}" || -z "${{ secrets.aws-role-to-assume }}" ]]; then
                   VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- AWS: aws-region and aws-role-to-assume are required"
                 else
-                  echo "  ✓ AWS inputs validated"
+                  echo "  ✅ AWS inputs validated"
                 fi
               fi
 
@@ -250,7 +259,7 @@ jobs:
                 if [[ -z "${{ secrets.gcp-wif-provider }}" || -z "${{ secrets.gcp-service-account }}" ]]; then
                   VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- GCP: gcp-wif-provider and gcp-service-account are required"
                 else
-                  echo "  ✓ GCP inputs validated"
+                  echo "  ✅ GCP inputs validated"
                 fi
               fi
 
@@ -260,7 +269,7 @@ jobs:
                 if [[ -z "${{ secrets.azure-client-id }}" || -z "${{ secrets.azure-tenant-id }}" || -z "${{ secrets.azure-subscription-id }}" ]]; then
                   VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Azure: azure-client-id, azure-tenant-id, and azure-subscription-id are required"
                 else
-                  echo "  ✓ Azure inputs validated"
+                  echo "  ✅ Azure inputs validated"
                 fi
               fi
 
@@ -270,7 +279,7 @@ jobs:
                 if [[ -z "${{ inputs.snowflake-account }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
                   VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Snowflake: snowflake-account, snowflake-user, snowflake-role, and snowflake-private-key are required"
                 else
-                  echo "  ✓ Snowflake inputs validated"
+                  echo "  ✅ Snowflake inputs validated"
                 fi
               fi
 
@@ -280,7 +289,7 @@ jobs:
                 if [[ -z "${{ secrets.databricks-host }}" || -z "${{ secrets.databricks-token }}" ]]; then
                   VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Databricks: databricks-host and databricks-token are required"
                 else
-                  echo "  ✓ Databricks inputs validated"
+                  echo "  ✅ Databricks inputs validated"
                 fi
               fi
 
