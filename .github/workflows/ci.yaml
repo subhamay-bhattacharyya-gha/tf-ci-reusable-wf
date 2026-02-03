@@ -358,6 +358,7 @@ jobs:
           TF_VAR_snowflake_account_name: ${{ inputs.snowflake-account-name }}
           TF_VAR_snowflake_user: ${{ inputs.snowflake-user }}
           TF_VAR_snowflake_role: ${{ inputs.snowflake-role }}
+          TF_VAR_snowflake_private_key: ${{ env.TF_VAR_snowflake_private_key }}
         with:
           cloud-provider: ${{ inputs.cloud-provider }}
           tf-config-path: infra/${{ inputs.cloud-provider }}/tf
