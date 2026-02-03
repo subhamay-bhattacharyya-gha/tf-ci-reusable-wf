@@ -61,7 +61,7 @@ This GitHub Action provides a reusable workflow that:
 | `aws-role-to-assume`    | AWS IAM role ARN to assume                                       | `cloud-provider` = `aws` |
 | `gcp-wif-provider`      | GCP Workload Identity Federation provider                        | `cloud-provider` = `gcp` |
 | `gcp-service-account`   | GCP service account email for authentication                     | `cloud-provider` = `gcp` |
-| `snowflake-private-key` | Snowflake private key for authentication                         | `cloud-provider` = `snowflake` |
+| `snowflake-private-key` | Snowflake private key for authentication (base64 encoded) | `cloud-provider` = `snowflake` |
 | `databricks-host`       | Databricks workspace URL                                         | `cloud-provider` = `databricks` |
 | `databricks-token`      | Databricks personal access token                                 | `cloud-provider` = `databricks` |
 | `azure-client-id`       | Azure client ID for authentication                               | `cloud-provider` = `azure` |
@@ -285,6 +285,39 @@ jobs:
     secrets:
       databricks-host: ${{ secrets.DATABRICKS_HOST }}
       databricks-token: ${{ secrets.DATABRICKS_TOKEN }}
+```
+
+---
+
+## 🔑 Preparing Snowflake Private Key
+
+The `snowflake-private-key` secret must be **base64 encoded** before storing it in GitHub Secrets. This ensures proper handling of the multi-line PEM format.
+
+### Steps to Prepare the Key
+
+1. **If your key is in a file** (e.g., `snowflake_key.p8`):
+   ```bash
+   cat snowflake_key.p8 | base64
+   ```
+
+2. **If your key is on a single line** and needs formatting:
+   ```bash
+   # Extract base64 content, format properly, then encode
+   grep -v "PRIVATE KEY" snowflake_key.p8 | tr -d '\n' | \
+   (echo "-----BEGIN PRIVATE KEY-----"; fold -w 64; echo "-----END PRIVATE KEY-----") | \
+   base64
+   ```
+
+3. **Copy the output** and store it as your `SNOWFLAKE_PRIVATE_KEY` GitHub secret.
+
+### Verification
+
+The workflow automatically decodes the base64-encoded key and verifies the format before use. You should see output like:
+```
+✅ Snowflake private key decoded successfully
+Key format verification:
+-----BEGIN PRIVATE KEY-----
+-----END PRIVATE KEY-----
 ```
 
 ---
