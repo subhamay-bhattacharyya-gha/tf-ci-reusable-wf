@@ -342,8 +342,8 @@ jobs:
           # Use a unique delimiter that won't appear in the key
           DELIMITER=$(openssl rand -hex 16)
           
-          # Set as environment variable using unique delimiter
-          echo "TF_VAR_snowflake_private_key<<${DELIMITER}" >> $GITHUB_ENV
+          # Set as SNOWFLAKE_PRIVATE_KEY environment variable (provider reads this directly)
+          echo "SNOWFLAKE_PRIVATE_KEY<<${DELIMITER}" >> $GITHUB_ENV
           echo "${DECODED_KEY}" >> $GITHUB_ENV
           echo "${DELIMITER}" >> $GITHUB_ENV
           
@@ -358,7 +358,7 @@ jobs:
           TF_VAR_snowflake_account_name: ${{ inputs.snowflake-account-name }}
           TF_VAR_snowflake_user: ${{ inputs.snowflake-user }}
           TF_VAR_snowflake_role: ${{ inputs.snowflake-role }}
-          TF_VAR_snowflake_private_key: ${{ env.TF_VAR_snowflake_private_key }}
+          SNOWFLAKE_PRIVATE_KEY: ${{ env.SNOWFLAKE_PRIVATE_KEY }}
         with:
           cloud-provider: ${{ inputs.cloud-provider }}
           tf-config-path: infra/${{ inputs.cloud-provider }}/tf
