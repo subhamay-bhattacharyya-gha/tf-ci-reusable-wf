@@ -1,3 +1,11 @@
+# [1.1.0](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/compare/v1.0.3...v1.1.0) (2026-02-26)
+
+
+### Features
+
+* add S3 backend inputs and enhance validation ([adcdfa7](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/adcdfa798c40abbdfd5027da20cfe7ff988c4fd9))
+* update tf-plan-action to feature branch for platform support ([a9c2764](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/a9c27641cf120e3cfbc67cd12dc0ae0edb7cc170))
+
 ## [1.0.3](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/compare/v1.0.2...v1.0.3) (2026-01-23)
 
 
