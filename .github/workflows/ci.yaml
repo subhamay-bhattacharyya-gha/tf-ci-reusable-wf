@@ -335,9 +335,9 @@ jobs:
         if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
         run: |
           printf '%b' "${{ secrets.snowflake-private-key }}" > /tmp/snowflake_key.p8
-          echo "SNOWFLAKE_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
+          echo "SNOWFLAKE_PRIVATE_KEY<<SNOWFLAKE_KEY_DELIMITER" >> $GITHUB_ENV
           cat /tmp/snowflake_key.p8 >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "SNOWFLAKE_KEY_DELIMITER" >> $GITHUB_ENV
 
       - name: Debug Key Format
         if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
