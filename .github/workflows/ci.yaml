@@ -3,20 +3,22 @@ name: Terraform Multi-Cloud CI Build
 on:
   workflow_call:
     inputs:
+      # Concurrency group name (optional - allows caller to customize)
+      concurrency-group:
+        description: "Concurrency group name for workflow runs"
+        required: false
+        type: string
+        default: ""
+
       # Cloud Provider Selection
       cloud-provider:
-        description: "Target cloud provider (aws, gcp, azure, snowflake, databricks)"
+        description: "Target cloud provider or platform (aws, gcp, azure, snowflake, databricks, platform)"
         required: true
         type: string
       tflint-ver:
         description: "TFLint version to install"
         required: true
         type: string
-      terraform-dir:
-        description: "Directory containing Terraform configuration files relative to cloud provider path"
-        required: false
-        type: string
-        default: "tf"
 
       # Backend Type Selection
       backend-type:
@@ -25,6 +27,22 @@ on:
         type: string
         default: "s3"
 
+      # S3 Backend Inputs
+      s3-bucket:
+        description: "S3 bucket name for Terraform state. Required when backend-type is 's3'."
+        required: false
+        type: string
+
+      s3-region:
+        description: "AWS region for S3 bucket. Required when backend-type is 's3'."
+        required: false
+        type: string
+
+      s3-key-prefix:
+        description: "S3 key prefix for Terraform state file. Required when backend-type is 's3'."
+        required: false
+        type: string
+
       # AWS Authentication Inputs
       aws-region:
         description: "AWS region for authentication. Required when cloud-provider is 'aws'."
@@ -32,8 +50,13 @@ on:
         type: string
 
       # Snowflake Authentication Inputs
-      snowflake-account:
-        description: "Snowflake account identifier. Required when cloud-provider is 'snowflake'."
+      snowflake-organization-name:
+        description: "Snowflake organization name. Required when cloud-provider is 'snowflake'."
+        required: false
+        type: string
+
+      snowflake-account-name:
+        description: "Snowflake account name. Required when cloud-provider is 'snowflake'."
         required: false
         type: string
 
@@ -104,6 +127,10 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: ${{ inputs.concurrency-group || format('terraform-ci-{0}-{1}', inputs.cloud-provider, github.ref) }}
+  cancel-in-progress: true
+
 jobs:
   terraform-lint:
     name: ⚙️ TFLint
@@ -112,127 +139,175 @@ jobs:
     steps:
       - name: Print Inputs
         run: |
-          echo "=== Workflow Inputs ==="
-          echo "Cloud Provider: ${{ inputs.cloud-provider }}"
-          echo "TFLint Version: ${{ inputs.tflint-ver }}"
-          echo "Backend Type: ${{ inputs.backend-type }}"
-          echo "Terraform Directory: ${{ inputs.terraform-dir }}"
-          echo "TF Vars File: ${{ inputs.tf-vars-file }}"
-          echo "TFC Token: ${{ secrets.tfc-token && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "AWS Region: ${{ inputs.aws-region }}"
-          echo "AWS Role to Assume: ${{ secrets.aws-role-to-assume && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "GCP WIF Provider: ${{ secrets.gcp-wif-provider && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "GCP Service Account: ${{ secrets.gcp-service-account && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Snowflake Account: ${{ inputs.snowflake-account }}"
-          echo "Snowflake User: ${{ inputs.snowflake-user }}"
-          echo "Snowflake Role: ${{ inputs.snowflake-role }}"
-          echo "Snowflake Private Key: ${{ secrets.snowflake-private-key && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Databricks Host: ${{ secrets.databricks-host && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Databricks Token: ${{ secrets.databricks-token && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Azure Client ID: ${{ secrets.azure-client-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Azure Tenant ID: ${{ secrets.azure-tenant-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "Azure Subscription ID: ${{ secrets.azure-subscription-id && '[PROVIDED]' || '[NOT PROVIDED]' }}"
-          echo "======================="
+          echo "=== DEBUG: Workflow Inputs ==="
+          echo "backend-type: ${{ inputs.backend-type }}"
+          echo "cloud-provider: ${{ inputs.cloud-provider }}"
+          echo "tflint-ver: ${{ inputs.tflint-ver }}"
+          echo "tf-vars-file: ${{ inputs.tf-vars-file }}"
+          echo ""
+          echo "=== HCP Terraform Cloud Inputs ==="
+          echo "tfc-token: [REDACTED - $(if [[ -n '${{ secrets.tfc-token }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo ""
+          echo "=== AWS Authentication Inputs ==="
+          echo "aws-region: ${{ inputs.aws-region }}"
+          echo "aws-role-to-assume: [REDACTED - $(if [[ -n '${{ secrets.aws-role-to-assume }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo ""
+          echo "=== GCP Authentication Inputs ==="
+          echo "gcp-wif-provider: [REDACTED - $(if [[ -n '${{ secrets.gcp-wif-provider }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "gcp-service-account: [REDACTED - $(if [[ -n '${{ secrets.gcp-service-account }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo ""
+          echo "=== Azure Authentication Inputs ==="
+          echo "azure-client-id: [REDACTED - $(if [[ -n '${{ secrets.azure-client-id }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "azure-tenant-id: [REDACTED - $(if [[ -n '${{ secrets.azure-tenant-id }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "azure-subscription-id: [REDACTED - $(if [[ -n '${{ secrets.azure-subscription-id }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo ""
+          echo "=== Snowflake Authentication Inputs ==="
+          echo "snowflake-organization-name: [REDACTED - $(if [[ -n '${{ inputs.snowflake-organization-name }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "snowflake-account-name: [REDACTED - $(if [[ -n '${{ inputs.snowflake-account-name }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "snowflake-user: [REDACTED - $(if [[ -n '${{ inputs.snowflake-user }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "snowflake-role: [REDACTED - $(if [[ -n '${{ inputs.snowflake-role }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "snowflake-private-key: [REDACTED - $(if [[ -n '${{ secrets.snowflake-private-key }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo ""
+          echo "=== Databricks Authentication Inputs ==="
+          echo "databricks-host: [REDACTED - $(if [[ -n '${{ secrets.databricks-host }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "databricks-token: [REDACTED - $(if [[ -n '${{ secrets.databricks-token }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "================================="
 
       # Validate input configuration
       #############################################
       - name: Validate Input Configuration
+        id: validate-config
+        shell: bash
         run: |
-          # Validate cloud provider value
-          if [[ "${{ inputs.cloud-provider }}" != "aws" && "${{ inputs.cloud-provider }}" != "gcp" && "${{ inputs.cloud-provider }}" != "azure" && "${{ inputs.cloud-provider }}" != "snowflake" && "${{ inputs.cloud-provider }}" != "databricks" ]]; then
-            echo "Error: Invalid cloud provider '${{ inputs.cloud-provider }}'. Must be one of: aws, gcp, azure, snowflake, databricks"
+          # Validate backend-type input
+          if [[ "${{ inputs.backend-type }}" != "s3" && "${{ inputs.backend-type }}" != "remote" ]]; then
+            echo "Error: Invalid backend-type '${{ inputs.backend-type }}'. Must be either 's3' or 'remote'"
             exit 1
           fi
-          echo "Valid cloud provider: ${{ inputs.cloud-provider }}"
-          
-          # Validate AWS requirements
-          if [[ "${{ inputs.cloud-provider }}" == "aws" ]]; then
-            echo "Validating AWS requirements..."
-            if [[ -z "${{ inputs.aws-region }}" ]]; then
-              echo "Error: aws-region is required when cloud-provider is 'aws'"
-              exit 1
-            fi
-            if [[ -z "${{ secrets.aws-role-to-assume }}" ]]; then
-              echo "Error: aws-role-to-assume secret is required when cloud-provider is 'aws'"
-              exit 1
-            fi
-            echo "✓ AWS requirements validated"
+          echo "✅ Valid backend-type: ${{ inputs.backend-type }}"
+
+          # Validate cloud-provider input
+          if [[ "${{ inputs.cloud-provider }}" != "aws" && "${{ inputs.cloud-provider }}" != "gcp" && "${{ inputs.cloud-provider }}" != "azure" && "${{ inputs.cloud-provider }}" != "snowflake" && "${{ inputs.cloud-provider }}" != "databricks" && "${{ inputs.cloud-provider }}" != "platform" ]]; then
+            echo "Error: Invalid cloud-provider '${{ inputs.cloud-provider }}'. Must be one of: aws, gcp, azure, snowflake, databricks, platform"
+            exit 1
           fi
-          
-          # Validate GCP requirements
-          if [[ "${{ inputs.cloud-provider }}" == "gcp" ]]; then
-            echo "Validating GCP requirements..."
-            if [[ -z "${{ secrets.gcp-wif-provider }}" ]]; then
-              echo "Error: gcp-wif-provider secret is required when cloud-provider is 'gcp'"
+          echo "✅ Valid cloud-provider: ${{ inputs.cloud-provider }}"
+
+          # Validate backend configuration
+          if [[ "${{ inputs.backend-type }}" == "s3" ]]; then
+            if [[ -z "${{ inputs.s3-bucket }}" || -z "${{ inputs.s3-region }}" ]]; then
+              echo "Error: s3-bucket and s3-region are required when backend-type is 's3'"
               exit 1
             fi
-            if [[ -z "${{ secrets.gcp-service-account }}" ]]; then
-              echo "Error: gcp-service-account secret is required when cloud-provider is 'gcp'"
+          elif [[ "${{ inputs.backend-type }}" == "remote" ]]; then
+            if [[ -z "${{ secrets.tfc-token }}" ]]; then
+              echo "Error: tfc-token is required when backend-type is 'remote'"
               exit 1
             fi
-            echo "✓ GCP requirements validated"
+            echo "Using existing backend configuration from Terraform files"
           fi
-          
-          # Validate Azure requirements
-          if [[ "${{ inputs.cloud-provider }}" == "azure" ]]; then
-            echo "Validating Azure requirements..."
-            if [[ -z "${{ secrets.azure-client-id }}" ]]; then
-              echo "Error: azure-client-id secret is required when cloud-provider is 'azure'"
-              exit 1
-            fi
-            if [[ -z "${{ secrets.azure-tenant-id }}" ]]; then
-              echo "Error: azure-tenant-id secret is required when cloud-provider is 'azure'"
-              exit 1
-            fi
-            if [[ -z "${{ secrets.azure-subscription-id }}" ]]; then
-              echo "Error: azure-subscription-id secret is required when cloud-provider is 'azure'"
-              exit 1
-            fi
-            echo "✓ Azure requirements validated"
-          fi
-          
-          # Validate Snowflake requirements
-          if [[ "${{ inputs.cloud-provider }}" == "snowflake" ]]; then
-            echo "Validating Snowflake requirements..."
-            if [[ -z "${{ inputs.snowflake-account }}" ]]; then
-              echo "Error: snowflake-account is required when cloud-provider is 'snowflake'"
-              exit 1
-            fi
-            if [[ -z "${{ inputs.snowflake-user }}" ]]; then
-              echo "Error: snowflake-user is required when cloud-provider is 'snowflake'"
-              exit 1
-            fi
-            if [[ -z "${{ inputs.snowflake-role }}" ]]; then
-              echo "Error: snowflake-role is required when cloud-provider is 'snowflake'"
-              exit 1
-            fi
-            if [[ -z "${{ secrets.snowflake-private-key }}" ]]; then
-              echo "Error: snowflake-private-key secret is required when cloud-provider is 'snowflake'"
-              exit 1
-            fi
-            echo "✓ Snowflake requirements validated"
-          fi
-          
-          # Validate Databricks requirements
-          if [[ "${{ inputs.cloud-provider }}" == "databricks" ]]; then
-            echo "Validating Databricks requirements..."
-            if [[ -z "${{ secrets.databricks-host }}" ]]; then
-              echo "Error: databricks-host secret is required when cloud-provider is 'databricks'"
-              exit 1
-            fi
-            if [[ -z "${{ secrets.databricks-token }}" ]]; then
-              echo "Error: databricks-token secret is required when cloud-provider is 'databricks'"
-              exit 1
-            fi
-            echo "✓ Databricks requirements validated"
-          fi
-          
-          echo "All validations passed successfully!"
+
+          # Validate cloud provider configuration
+          case "${{ inputs.cloud-provider }}" in
+            "aws")
+              if [[ -z "${{ inputs.aws-region }}" || -z "${{ secrets.aws-role-to-assume }}" ]]; then
+                echo "Error: aws-region and aws-role-to-assume are required when cloud-provider is 'aws'"
+                exit 1
+              fi
+              ;;
+            "gcp")
+              if [[ -z "${{ secrets.gcp-wif-provider }}" || -z "${{ secrets.gcp-service-account }}" ]]; then
+                echo "Error: gcp-wif-provider and gcp-service-account are required when cloud-provider is 'gcp'"
+                exit 1
+              fi
+              ;;
+            "azure")
+              if [[ -z "${{ secrets.azure-client-id }}" || -z "${{ secrets.azure-tenant-id }}" || -z "${{ secrets.azure-subscription-id }}" ]]; then
+                echo "Error: azure-client-id, azure-tenant-id, and azure-subscription-id are required when cloud-provider is 'azure'"
+                exit 1
+              fi
+              ;;
+            "snowflake")
+              if [[ -z "${{ inputs.snowflake-organization-name }}" || -z "${{ inputs.snowflake-account-name }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
+                echo "Error: snowflake-organization-name, snowflake-account-name, snowflake-user, snowflake-role, and snowflake-private-key are required when cloud-provider is 'snowflake'"
+                exit 1
+              fi
+              ;;
+            "databricks")
+              if [[ -z "${{ secrets.databricks-host }}" || -z "${{ secrets.databricks-token }}" ]]; then
+                echo "Error: databricks-host and databricks-token are required when cloud-provider is 'databricks'"
+                exit 1
+              fi
+              ;;
+            "platform")
+              echo "Platform mode: Checking for cloud provider directories in infra/"
+              VALIDATION_ERRORS=""
+
+              # Check for AWS directory
+              if [[ -d "infra/aws" ]]; then
+                echo "Found infra/aws directory - validating AWS inputs..."
+                if [[ -z "${{ inputs.aws-region }}" || -z "${{ secrets.aws-role-to-assume }}" ]]; then
+                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- AWS: aws-region and aws-role-to-assume are required"
+                else
+                  echo "  ✅ AWS inputs validated"
+                fi
+              fi
+
+              # Check for GCP directory
+              if [[ -d "infra/gcp" ]]; then
+                echo "Found infra/gcp directory - validating GCP inputs..."
+                if [[ -z "${{ secrets.gcp-wif-provider }}" || -z "${{ secrets.gcp-service-account }}" ]]; then
+                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- GCP: gcp-wif-provider and gcp-service-account are required"
+                else
+                  echo "  ✅ GCP inputs validated"
+                fi
+              fi
+
+              # Check for Azure directory
+              if [[ -d "infra/azure" ]]; then
+                echo "Found infra/azure directory - validating Azure inputs..."
+                if [[ -z "${{ secrets.azure-client-id }}" || -z "${{ secrets.azure-tenant-id }}" || -z "${{ secrets.azure-subscription-id }}" ]]; then
+                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Azure: azure-client-id, azure-tenant-id, and azure-subscription-id are required"
+                else
+                  echo "  ✅ Azure inputs validated"
+                fi
+              fi
+
+              # Check for Snowflake directory
+              if [[ -d "infra/snowflake" ]]; then
+                echo "Found infra/snowflake directory - validating Snowflake inputs..."
+                if [[ -z "${{ inputs.snowflake-organization-name }}" || -z "${{ inputs.snowflake-account-name }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
+                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Snowflake: snowflake-organization-name, snowflake-account-name, snowflake-user, snowflake-role, and snowflake-private-key are required"
+                else
+                  echo "  ✅ Snowflake inputs validated"
+                fi
+              fi
+
+              # Check for Databricks directory
+              if [[ -d "infra/databricks" ]]; then
+                echo "Found infra/databricks directory - validating Databricks inputs..."
+                if [[ -z "${{ secrets.databricks-host }}" || -z "${{ secrets.databricks-token }}" ]]; then
+                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Databricks: databricks-host and databricks-token are required"
+                else
+                  echo "  ✅ Databricks inputs validated"
+                fi
+              fi
+
+              # Check if any validation errors occurred
+              if [[ -n "$VALIDATION_ERRORS" ]]; then
+                echo ""
+                echo "Error: Missing required inputs for detected platforms:"
+                echo -e "$VALIDATION_ERRORS"
+                exit 1
+              fi
+              echo "All detected platform inputs validated successfully"
+              ;;
+          esac
 
       - name: Run TFLint
         uses: subhamay-bhattacharyya-gha/tf-lint-action@main
         with:
-          terraform-dir: infra/${{ inputs.cloud-provider }}/${{ inputs.terraform-dir }}
+          tf-config-path: infra/${{ inputs.cloud-provider }}/tf
           tflint-ver: ${{ inputs.tflint-ver }}
           use-cache: "true"
           tflint-format: "compact"
@@ -247,7 +322,7 @@ jobs:
       - name: Terraform Validate 
         uses: subhamay-bhattacharyya-gha/tf-validate-action@main
         with:
-          terraform-dir: infra/${{ inputs.cloud-provider }}/${{ inputs.terraform-dir }}
+          tf-config-path: infra/${{ inputs.cloud-provider }}/tf
 
   terraform-plan:
     name: 🔍 Plan
@@ -256,25 +331,54 @@ jobs:
       - terraform-validate
 
     steps:
+      - name: Set Snowflake Private Key
+        if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
+        run: |
+          EOF_MARKER=$(openssl rand -hex 16)
+          echo "SNOWFLAKE_PRIVATE_KEY<<${EOF_MARKER}" >> $GITHUB_ENV
+          printf '%s' "${{ secrets.snowflake-private-key }}" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "${EOF_MARKER}" >> $GITHUB_ENV
+
+      - name: Debug Key Format
+        if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
+        run: |
+          echo "First 50 chars of key:"
+          echo "${SNOWFLAKE_PRIVATE_KEY:0:50}"
+          echo "---"
+          echo "Key contains literal backslash-n: "
+          if [[ "$SNOWFLAKE_PRIVATE_KEY" == *'\\n'* ]]; then
+            echo "YES - problem found"
+          else
+            echo "NO"
+          fi
+          echo "---"
+          echo "Line count:"
+          echo "$SNOWFLAKE_PRIVATE_KEY" | wc -l
+
       - name: Terraform Plan 
         uses: subhamay-bhattacharyya-gha/tf-plan-action@main
+        env:
+          TF_VAR_databricks_host: ${{ secrets.databricks-host }}
+          TF_VAR_databricks_token: ${{ secrets.databricks-token }}
+          TF_VAR_snowflake_organization_name: ${{ inputs.snowflake-organization-name }}
+          TF_VAR_snowflake_account_name: ${{ inputs.snowflake-account-name }}
+          TF_VAR_snowflake_user: ${{ inputs.snowflake-user }}
+          TF_VAR_snowflake_role: ${{ inputs.snowflake-role }}
+          SNOWFLAKE_PRIVATE_KEY: ${{ env.SNOWFLAKE_PRIVATE_KEY }}
         with:
           cloud-provider: ${{ inputs.cloud-provider }}
-          terraform-dir: infra/${{ inputs.cloud-provider }}/${{ inputs.terraform-dir }}
+          tf-config-path: infra/${{ inputs.cloud-provider }}/tf
           backend-type: ${{ inputs.backend-type }}
+          s3-bucket: ${{ inputs.s3-bucket }}
+          s3-region: ${{ inputs.s3-region }}
+          s3-key-prefix: ${{ inputs.s3-key-prefix }}
           tfc-token: ${{ secrets.tfc-token }}
           aws-region: ${{ inputs.aws-region }}
           aws-role-to-assume: ${{ secrets.aws-role-to-assume }}
           gcp-wif-provider: ${{ secrets.gcp-wif-provider }}
           gcp-service-account: ${{ secrets.gcp-service-account }}
-          snowflake-account: ${{ inputs.snowflake-account }}
-          snowflake-user: ${{ inputs.snowflake-user }}
-          snowflake-role: ${{ inputs.snowflake-role }}
-          snowflake-private-key: ${{ secrets.snowflake-private-key }}
-          databricks-host: ${{ secrets.databricks-host }}
-          databricks-token: ${{ secrets.databricks-token }}
           azure-client-id: ${{ secrets.azure-client-id }}
           azure-tenant-id: ${{ secrets.azure-tenant-id }}
           azure-subscription-id: ${{ secrets.azure-subscription-id }}
           tf-vars-file: ${{ inputs.tf-vars-file }}
-          tf-plan-name: ${{ inputs.cloud-provider }}-terraform-plan
