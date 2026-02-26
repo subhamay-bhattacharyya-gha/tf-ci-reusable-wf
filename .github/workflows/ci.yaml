@@ -334,10 +334,11 @@ jobs:
       - name: Set Snowflake Private Key
         if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
         run: |
-          printf '%b' "${{ secrets.snowflake-private-key }}" > /tmp/snowflake_key.p8
-          echo "SNOWFLAKE_PRIVATE_KEY<<SNOWFLAKE_KEY_DELIMITER" >> $GITHUB_ENV
-          cat /tmp/snowflake_key.p8 >> $GITHUB_ENV
-          echo "SNOWFLAKE_KEY_DELIMITER" >> $GITHUB_ENV
+          EOF_MARKER=$(openssl rand -hex 16)
+          echo "SNOWFLAKE_PRIVATE_KEY<<${EOF_MARKER}" >> $GITHUB_ENV
+          printf '%s' "${{ secrets.snowflake-private-key }}" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "${EOF_MARKER}" >> $GITHUB_ENV
 
       - name: Debug Key Format
         if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
