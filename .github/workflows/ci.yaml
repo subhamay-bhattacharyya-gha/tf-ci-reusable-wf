@@ -312,11 +312,27 @@ jobs:
           use-cache: "true"
           tflint-format: "compact"
 
+  terraform-tag:
+    name: 🏷️ YOR Tag
+    runs-on: ubuntu-latest
+    needs: terraform-lint
+    permissions:
+      contents: read
+
+    steps:
+      - name: YOR Tag (placeholder)
+        shell: bash
+        run: |
+          echo "⚠️  YOR tagging is not yet implemented."
+          echo "This step is a placeholder and will be replaced with the actual"
+          echo "YOR tagging implementation in a future update."
+          echo "Skipping YOR tagging step."
+
   terraform-validate:
     name: ✅ Validate
     runs-on: ubuntu-latest
-    needs: 
-      - terraform-lint
+    needs:
+      - terraform-tag
 
     steps:
       - name: Terraform Validate 
@@ -324,11 +340,27 @@ jobs:
         with:
           tf-config-path: infra/${{ inputs.cloud-provider }}/tf
 
+  checkov-scan:
+    name: 🔐 Checkov Scan
+    runs-on: ubuntu-latest
+    needs: terraform-validate
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkov Scan (placeholder)
+        shell: bash
+        run: |
+          echo "⚠️  Checkov security scanning is not yet implemented."
+          echo "This step is a placeholder and will be replaced with the actual"
+          echo "Checkov scan implementation in a future update."
+          echo "Skipping Checkov scan step."
+
   terraform-plan:
     name: 🔍 Plan
     runs-on: ubuntu-latest
-    needs: 
-      - terraform-validate
+    needs:
+      - checkov-scan
 
     steps:
       - name: Set Snowflake Private Key

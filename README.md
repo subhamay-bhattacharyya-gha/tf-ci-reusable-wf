@@ -24,12 +24,15 @@ This GitHub Action provides a reusable workflow that:
 1. **📋 Print Inputs**: Displays all workflow inputs for debugging
 2. **✅ Validate Input Configuration**: Validates backend-type, cloud-provider, and required credentials
 3. **⚙️ TFLint**: Lints Terraform code for best practices and errors
-4. **✅ Validate**: Validates Terraform configuration files
-5. **🔍 Plan**: Creates Terraform execution plan
+4. **🏷️ YOR Tag**: Placeholder for YOR (Your Open-source Resources) IaC tagging — stub only, real implementation pending
+5. **✅ Validate**: Validates Terraform configuration files
+6. **🔐 Checkov Scan**: Placeholder for Checkov security scanning — stub only, real implementation pending
+7. **🔍 Plan**: Creates Terraform execution plan
 
 ### Planned Enhancements
 
-- Checkov security scanning
+- YOR IaC tagging (placeholder job in place)
+- Checkov security scanning (placeholder job in place)
 - Infracost cost estimation
 - Automated release tagging
 
@@ -76,24 +79,18 @@ This GitHub Action provides a reusable workflow that:
 flowchart TD
     A[Trigger via workflow_call] --> B[📋 Print Inputs]
     B --> C[✅ Validate Input Configuration]
-    C --> D{cloud-provider}
-    
-    D -->|Single Provider| E[⚙️ TFLint]
-    D -->|Platform Mode| F[⚙️ TFLint - All Providers]
-    
-    E --> G[✅ Terraform Validate]
-    F --> H[✅ Terraform Validate - All Providers]
-    
-    G --> I[🔍 Terraform Plan]
-    H --> J[🔍 Terraform Plan - All Providers]
-    
+    C --> E[⚙️ TFLint]
+    E --> T[🏷️ YOR Tag - placeholder]
+    T --> G[✅ Terraform Validate]
+    G --> K[🔐 Checkov Scan - placeholder]
+    K --> I[🔍 Terraform Plan]
+
     style C fill:#e8f5e9
     style E fill:#e1f5fe
-    style F fill:#e1f5fe
+    style T fill:#fff8e1
     style G fill:#f3e5f5
-    style H fill:#f3e5f5
+    style K fill:#fff8e1
     style I fill:#fff3e0
-    style J fill:#fff3e0
 ```
 
 ---
