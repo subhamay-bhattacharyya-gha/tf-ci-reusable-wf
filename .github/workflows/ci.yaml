@@ -90,6 +90,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  security-events: write
 
 concurrency:
   group: ${{ inputs.concurrency-group || format('terraform-ci-{0}-{1}', inputs.cloud-provider, github.ref) }}
