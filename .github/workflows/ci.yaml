@@ -317,16 +317,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: terraform-validate
     permissions:
+      id-token: write
       contents: read
 
     steps:
-      - name: Checkov Scan (placeholder)
-        shell: bash
-        run: |
-          echo "⚠️  Checkov security scanning is not yet implemented."
-          echo "This step is a placeholder and will be replaced with the actual"
-          echo "Checkov scan implementation in a future update."
-          echo "Skipping Checkov scan step."
+      - name: Run Checkov Scan
+        uses: subhamay-bhattacharyya-gha/checkov-scan-action@feature/GHA-0031-feat-enhance-checkov-scan
+        with:
+          github-token: ${{ github.token }}
+          release-tag: v1.0.0
+          iac-dir: infra/platform/tf
+          iac-framework: "terraform"
+          soft-fail: true
 
   terraform-plan:
     name: 🔍 Plan
