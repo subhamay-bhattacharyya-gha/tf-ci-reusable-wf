@@ -328,7 +328,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           release-tag: ${{ github.ref_name }}
-          iac-dir: infra/platform/tf
+          iac-dir: infra/${{ inputs.cloud-provider }}/tf
           iac-framework: "terraform"
           soft-fail: true
 
