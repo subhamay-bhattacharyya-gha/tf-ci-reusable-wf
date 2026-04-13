@@ -42,15 +42,13 @@ This GitHub Action provides a reusable workflow that:
 
 | Name                    | Description                                                                 | Required | Default               |
 |-------------------------|-----------------------------------------------------------------------------|----------|------------------------|
+| `environment`           | GitHub environment name (`ci`, `devl`, `test`, `prod`)                     | ❌ No    | `ci`                   |
 | `cloud-provider`        | Target cloud provider or platform (`aws`, `gcp`, `azure`, `snowflake`, `databricks`, `platform`) | ✅ Yes   | —                      |
 | `tflint-ver`            | TFLint version to install                                                  | ✅ Yes   | —                      |
 | `backend-type`          | Backend type: `s3` for AWS S3 or `remote` for HCP Terraform Cloud         | ❌ No    | `s3`                   |
 | `s3-bucket`             | S3 bucket name for Terraform state (required when backend-type is `s3`)   | ❌ No    | —                      |
 | `s3-region`             | AWS region for S3 bucket (required when backend-type is `s3`)             | ❌ No    | —                      |
 | `s3-key-prefix`         | S3 key prefix for Terraform state file (required when backend-type is `s3`) | ❌ No  | —                      |
-| `aws-region`            | AWS region for authentication (required when cloud-provider is `aws`)     | ❌ No    | —                      |
-| `snowflake-organization-name`    | Snowflake organization name (required when cloud-provider is `snowflake`) | ❌ No   | —                      |
-| `snowflake-account-name`| Snowflake account name (required when cloud-provider is `snowflake`) | ❌ No   | —                      |
 | `snowflake-user`        | Snowflake user name (required when cloud-provider is `snowflake`)         | ❌ No    | —                      |
 | `snowflake-role`        | Snowflake role name (required when cloud-provider is `snowflake`)         | ❌ No    | —                      |
 | `terraform-dir`         | Directory containing Terraform configuration files relative to cloud provider path | ❌ No | `tf`                   |
@@ -58,18 +56,28 @@ This GitHub Action provides a reusable workflow that:
 
 ### 🔐 Secrets
 
-| Name                    | Description                                                      | Required When           |
-|-------------------------|------------------------------------------------------------------|-------------------------|
-| `tfc-token`             | HCP Terraform Cloud API token                                   | `backend-type` = `remote` |
-| `aws-role-to-assume`    | AWS IAM role ARN to assume                                       | `cloud-provider` = `aws` |
-| `gcp-wif-provider`      | GCP Workload Identity Federation provider                        | `cloud-provider` = `gcp` |
-| `gcp-service-account`   | GCP service account email for authentication                     | `cloud-provider` = `gcp` |
-| `snowflake-private-key` | Snowflake private key for authentication (base64 encoded) | `cloud-provider` = `snowflake` |
+| Name                    | Description                                                      | Required When                  |
+|-------------------------|------------------------------------------------------------------|--------------------------------|
+| `tfc-token`             | HCP Terraform Cloud API token                                   | `backend-type` = `remote`      |
+| `snowflake-private-key` | Snowflake private key for authentication (base64 encoded)       | `cloud-provider` = `snowflake` |
 | `databricks-host`       | Databricks workspace URL                                         | `cloud-provider` = `databricks` |
 | `databricks-token`      | Databricks personal access token                                 | `cloud-provider` = `databricks` |
-| `azure-client-id`       | Azure client ID for authentication                               | `cloud-provider` = `azure` |
-| `azure-tenant-id`       | Azure tenant ID for authentication                               | `cloud-provider` = `azure` |
-| `azure-subscription-id` | Azure subscription ID for authentication                         | `cloud-provider` = `azure` |
+
+### 🌍 Environment Variables
+
+The following variables are read from the GitHub environment specified by the `environment` input (default: `ci`). They must be configured in the consuming repository under **Settings → Environments → [environment name] → Environment variables**.
+
+| Name                          | Description                                      | Required When                  |
+|-------------------------------|--------------------------------------------------|--------------------------------|
+| `AWS_REGION`                  | AWS region for authentication                    | `cloud-provider` = `aws`      |
+| `AWS_OIDC_ROLE`               | AWS IAM role ARN to assume via OIDC              | `cloud-provider` = `aws`      |
+| `GCP_WIF_PROVIDER`            | GCP Workload Identity Federation provider        | `cloud-provider` = `gcp`      |
+| `GCP_SERVICE_ACCOUNT`         | GCP service account email for authentication     | `cloud-provider` = `gcp`      |
+| `AZURE_CLIENT_ID`             | Azure client ID for authentication               | `cloud-provider` = `azure`    |
+| `AZURE_TENANT_ID`             | Azure tenant ID for authentication               | `cloud-provider` = `azure`    |
+| `AZURE_SUBSCRIPTION_ID`       | Azure subscription ID for authentication         | `cloud-provider` = `azure`    |
+| `SNOWFLAKE_ORGANIZATION_NAME` | Snowflake organization name                      | `cloud-provider` = `snowflake` |
+| `SNOWFLAKE_ACCOUNT_NAME`      | Snowflake account name                           | `cloud-provider` = `snowflake` |
 
 ---
 
@@ -120,24 +128,16 @@ jobs:
   terraform-ci:
     uses: subhamay-bhattacharyya-gha/tf-ci-reusable-wf/.github/workflows/ci.yaml@main
     with:
+      environment: ci
       cloud-provider: platform
       tflint-ver: "v0.50.0"
       backend-type: s3
       s3-bucket: "my-terraform-state-bucket"
       s3-region: "us-east-1"
       s3-key-prefix: "terraform/state"
-      aws-region: us-east-1
-      snowflake-organization-name: "my-org"
-      snowflake-account-name: "my-account"
       snowflake-user: "terraform_user"
       snowflake-role: "TERRAFORM_ROLE"
     secrets:
-      aws-role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-      gcp-wif-provider: ${{ secrets.GCP_WIF_PROVIDER }}
-      gcp-service-account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-      azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-      azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       snowflake-private-key: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
       databricks-host: ${{ secrets.DATABRICKS_HOST }}
       databricks-token: ${{ secrets.DATABRICKS_TOKEN }}
@@ -162,16 +162,14 @@ jobs:
   terraform-ci:
     uses: subhamay-bhattacharyya-gha/tf-ci-reusable-wf/.github/workflows/ci.yaml@main
     with:
+      environment: ci
       cloud-provider: aws
       tflint-ver: "v0.50.0"
       backend-type: s3
       s3-bucket: "my-terraform-state-bucket"
       s3-region: "us-east-1"
       s3-key-prefix: "aws/terraform"
-      aws-region: us-east-1
       tf-vars-file: terraform.tfvars
-    secrets:
-      aws-role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
 ```
 
 ### GCP with HCP Terraform Cloud Backend
@@ -189,14 +187,13 @@ jobs:
   terraform-ci:
     uses: subhamay-bhattacharyya-gha/tf-ci-reusable-wf/.github/workflows/ci.yaml@main
     with:
+      environment: ci
       cloud-provider: gcp
       tflint-ver: "v0.50.0"
       backend-type: remote
       tf-vars-file: gcp.tfvars
     secrets:
       tfc-token: ${{ secrets.TFC_TOKEN }}
-      gcp-wif-provider: ${{ secrets.GCP_WIF_PROVIDER }}
-      gcp-service-account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 ```
 
 ### Azure with S3 Backend
@@ -214,6 +211,7 @@ jobs:
   terraform-ci:
     uses: subhamay-bhattacharyya-gha/tf-ci-reusable-wf/.github/workflows/ci.yaml@main
     with:
+      environment: ci
       cloud-provider: azure
       tflint-ver: "v0.50.0"
       backend-type: s3
@@ -221,10 +219,6 @@ jobs:
       s3-region: "us-east-1"
       s3-key-prefix: "azure/terraform"
       tf-vars-file: azure.tfvars
-    secrets:
-      azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-      azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-      azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 ```
 
 ### Snowflake with S3 Backend
@@ -242,14 +236,13 @@ jobs:
   terraform-ci:
     uses: subhamay-bhattacharyya-gha/tf-ci-reusable-wf/.github/workflows/ci.yaml@main
     with:
+      environment: ci
       cloud-provider: snowflake
       tflint-ver: "v0.50.0"
       backend-type: s3
       s3-bucket: "my-terraform-state-bucket"
       s3-region: "us-east-1"
       s3-key-prefix: "snowflake/terraform"
-      snowflake-organization-name: "my-org"
-      snowflake-account-name: "my-account"
       snowflake-user: "terraform_user"
       snowflake-role: "TERRAFORM_ROLE"
       tf-vars-file: snowflake.tfvars
@@ -272,6 +265,7 @@ jobs:
   terraform-ci:
     uses: subhamay-bhattacharyya-gha/tf-ci-reusable-wf/.github/workflows/ci.yaml@main
     with:
+      environment: ci
       cloud-provider: databricks
       tflint-ver: "v0.50.0"
       backend-type: s3
@@ -353,11 +347,11 @@ The workflow performs comprehensive input validation before execution:
 - For remote backend: Requires `tfc-token` secret
 
 ### Cloud Provider Validation
-- **AWS**: Requires `aws-region` and `aws-role-to-assume`
-- **GCP**: Requires `gcp-wif-provider` and `gcp-service-account`
-- **Azure**: Requires `azure-client-id`, `azure-tenant-id`, and `azure-subscription-id`
-- **Snowflake**: Requires `snowflake-organization-name`, `snowflake-account-name`, `snowflake-user`, `snowflake-role`, and `snowflake-private-key`
-- **Databricks**: Requires `databricks-host` and `databricks-token`
+- **AWS**: Requires `AWS_REGION` and `AWS_OIDC_ROLE` environment variables
+- **GCP**: Requires `GCP_WIF_PROVIDER` and `GCP_SERVICE_ACCOUNT` environment variables
+- **Azure**: Requires `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` environment variables
+- **Snowflake**: Requires `SNOWFLAKE_ORGANIZATION_NAME` and `SNOWFLAKE_ACCOUNT_NAME` environment variables, `snowflake-user` and `snowflake-role` inputs, and `snowflake-private-key` secret
+- **Databricks**: Requires `databricks-host` and `databricks-token` secrets
 - **Platform**: Validates inputs only for detected provider directories
 
 ---
