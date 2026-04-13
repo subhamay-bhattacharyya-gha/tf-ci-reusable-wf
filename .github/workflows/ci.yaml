@@ -332,6 +332,9 @@ jobs:
           iac-framework: "terraform"
           soft-fail: true
 
+      - name: 📋 Summarize and Print Checkov Scan Report with Snippets
+        uses: subhamay-bhattacharyya-gha/checkov-report-action@main
+
   terraform-plan:
     name: 🔍 Plan
     runs-on: ubuntu-latest
