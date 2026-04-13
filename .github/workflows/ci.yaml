@@ -313,34 +313,12 @@ jobs:
         with:
           tf-config-path: infra/${{ inputs.cloud-provider }}/tf
 
-  checkov-scan:
-    name: 🔐 Checkov Scan
-    runs-on: ubuntu-latest
-    needs: terraform-validate
-    permissions:
-      id-token: write
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Run Checkov Scan
-        uses: subhamay-bhattacharyya-gha/checkov-scan-action@feature/GHA-0031-feat-enhance-checkov-scan
-        with:
-          github-token: ${{ github.token }}
-          release-tag: ${{ github.ref_name }}
-          iac-dir: infra/${{ inputs.cloud-provider }}/tf
-          iac-framework: "terraform"
-          soft-fail: true
-
-      - name: 📋 Summarize and Print Checkov Scan Report with Snippets
-        uses: subhamay-bhattacharyya-gha/checkov-report-action@main
-
   terraform-plan:
     name: 🔍 Plan
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     needs:
-      - checkov-scan
+      - terraform-validate
 
     steps:
       - name: Set Snowflake Private Key
@@ -394,3 +372,47 @@ jobs:
           azure-tenant-id: ${{ vars.AZURE_TENANT_ID }}
           azure-subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           tf-vars-file: ${{ inputs.tf-vars-file }}
+
+      - name: Export Terraform Plan to JSON
+        working-directory: infra/${{ inputs.cloud-provider }}/tf
+        run: |
+          terraform plan -out=tfplan.binary
+          terraform show -json tfplan.binary > tfplan.json
+
+      - name: Upload Terraform Plan JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-json-${{ inputs.cloud-provider }}
+          path: infra/${{ inputs.cloud-provider }}/tf/tfplan.json
+          retention-days: 1
+
+  checkov-scan:
+    name: 🔐 Checkov Scan
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    permissions:
+      id-token: write
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Terraform Plan JSON
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-json-${{ inputs.cloud-provider }}
+          path: infra/${{ inputs.cloud-provider }}/tf
+
+      - name: Run Checkov Scan
+        uses: subhamay-bhattacharyya-gha/checkov-scan-action@feature/GHA-0031-feat-enhance-checkov-scan
+        with:
+          github-token: ${{ github.token }}
+          release-tag: ${{ github.ref_name }}
+          iac-dir: infra/${{ inputs.cloud-provider }}/tf
+          iac-framework: "terraform_plan"
+          soft-fail: true
+
+      - name: 📋 Summarize and Print Checkov Scan Report with Snippets
+        uses: subhamay-bhattacharyya-gha/checkov-report-action@main
