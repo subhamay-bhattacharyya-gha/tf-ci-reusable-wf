@@ -327,7 +327,7 @@ jobs:
         uses: subhamay-bhattacharyya-gha/checkov-scan-action@feature/GHA-0031-feat-enhance-checkov-scan
         with:
           github-token: ${{ github.token }}
-          release-tag: v1.0.0
+          release-tag: ${{ github.ref_name }}
           iac-dir: infra/platform/tf
           iac-framework: "terraform"
           soft-fail: true
