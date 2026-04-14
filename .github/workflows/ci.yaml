@@ -96,6 +96,9 @@ concurrency:
   group: ${{ inputs.concurrency-group || format('terraform-ci-{0}-{1}', inputs.cloud-provider, github.ref) }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   terraform-lint:
     name: ⚙️ TFLint
