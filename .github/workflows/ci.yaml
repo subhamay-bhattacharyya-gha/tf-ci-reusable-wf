@@ -296,13 +296,13 @@ jobs:
       contents: read
 
     steps:
-      - name: YOR Tag (placeholder)
-        shell: bash
-        run: |
-          echo "⚠️  YOR tagging is not yet implemented."
-          echo "This step is a placeholder and will be replaced with the actual"
-          echo "YOR tagging implementation in a future update."
-          echo "Skipping YOR tagging step."
+      - name: YOR Tag (Git Metadata Tagging)
+        uses: subhamay-bhattacharyya-gha/tf-yor-action@v1.0.1
+        with:
+          terraform-dir: infra/${{ inputs.cloud-provider }}/tf
+          release-tag: v1.0.1
+          commit-changes: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   terraform-validate:
     name: ✅ Validate
