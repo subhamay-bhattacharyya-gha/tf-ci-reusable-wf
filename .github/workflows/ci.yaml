@@ -346,8 +346,8 @@ jobs:
           echo "Line count:"
           echo "$SNOWFLAKE_PRIVATE_KEY" | wc -l
 
-      - name: Terraform Plan 
-        uses: subhamay-bhattacharyya-gha/tf-plan-action@main
+      - name: Terraform Plan
+        uses: subhamay-bhattacharyya-gha/tf-plan-action@v1.4.0
         env:
           TF_VAR_databricks_host: ${{ secrets.databricks-host }}
           TF_VAR_databricks_token: ${{ secrets.databricks-token }}
@@ -372,14 +372,6 @@ jobs:
           azure-tenant-id: ${{ vars.AZURE_TENANT_ID }}
           azure-subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           tf-vars-file: ${{ inputs.tf-vars-file }}
-
-      - name: Export Terraform Plan to JSON
-        working-directory: infra/${{ inputs.cloud-provider }}/tf
-        env:
-          TF_TOKEN_app_terraform_io: ${{ secrets.tfc-token }}
-        run: |
-          terraform plan -out=tfplan.binary
-          terraform show -json tfplan.binary > tfplan.json
 
       - name: Upload Terraform Plan JSON
         uses: actions/upload-artifact@v4
