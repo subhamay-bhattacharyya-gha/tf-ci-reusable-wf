@@ -408,7 +408,7 @@ jobs:
           github-token: ${{ github.token }}
           release-tag: ${{ github.ref_name }}
           iac-dir: infra/${{ inputs.cloud-provider }}/tf
-          iac-framework: "terraform_plan"
+          plan-file: infra/${{ inputs.cloud-provider }}/tf/tfplan.json
           soft-fail: true
 
       - name: 📋 Summarize and Print Checkov Scan Report with Snippets
