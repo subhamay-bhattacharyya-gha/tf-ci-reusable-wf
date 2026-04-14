@@ -288,27 +288,11 @@ jobs:
           use-cache: "true"
           tflint-format: "compact"
 
-  terraform-tag:
-    name: 🏷️ YOR Tag
-    runs-on: ubuntu-latest
-    needs: terraform-lint
-    permissions:
-      contents: read
-
-    steps:
-      - name: YOR Tag (Git Metadata Tagging)
-        uses: subhamay-bhattacharyya-gha/tf-yor-action@v1.0.1
-        with:
-          terraform-dir: infra/${{ inputs.cloud-provider }}/tf
-          release-tag: ${{ github.ref_name }}
-          commit-changes: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
   terraform-validate:
     name: ✅ Validate
     runs-on: ubuntu-latest
     needs:
-      - terraform-tag
+      - terraform-lint
 
     steps:
       - name: Terraform Validate 
