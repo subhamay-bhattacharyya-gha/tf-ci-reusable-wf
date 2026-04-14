@@ -347,7 +347,7 @@ jobs:
           echo "$SNOWFLAKE_PRIVATE_KEY" | wc -l
 
       - name: Terraform Plan
-        uses: subhamay-bhattacharyya-gha/tf-plan-action@v1.4.0
+        uses: subhamay-bhattacharyya-gha/tf-plan-action@feature/GHA-0061-feat-plan-summary-with-run-url
         env:
           TF_VAR_databricks_host: ${{ secrets.databricks-host }}
           TF_VAR_databricks_token: ${{ secrets.databricks-token }}
