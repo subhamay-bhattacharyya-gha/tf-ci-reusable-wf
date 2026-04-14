@@ -388,7 +388,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download Terraform Plan JSON
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: tfplan-json-${{ inputs.cloud-provider }}
           path: infra/${{ inputs.cloud-provider }}/tf
