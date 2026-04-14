@@ -377,7 +377,7 @@ jobs:
           tf-vars-file: ${{ inputs.tf-vars-file }}
 
       - name: Upload Terraform Plan JSON
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tfplan-json-${{ inputs.cloud-provider }}
           path: infra/${{ inputs.cloud-provider }}/tf/tfplan.json
@@ -394,10 +394,10 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download Terraform Plan JSON
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: tfplan-json-${{ inputs.cloud-provider }}
           path: infra/${{ inputs.cloud-provider }}/tf
