@@ -406,7 +406,6 @@ jobs:
         uses: subhamay-bhattacharyya-gha/checkov-scan-action@feature/GHA-0031-feat-enhance-checkov-scan
         with:
           github-token: ${{ github.token }}
-          release-tag: ${{ github.ref_name }}
           iac-dir: infra/${{ inputs.cloud-provider }}/tf
           iac-framework: "terraform_plan"
           plan-file: infra/${{ inputs.cloud-provider }}/tf/tfplan.json
