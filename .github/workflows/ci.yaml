@@ -300,7 +300,7 @@ jobs:
         uses: subhamay-bhattacharyya-gha/tf-yor-action@v1.0.1
         with:
           terraform-dir: infra/${{ inputs.cloud-provider }}/tf
-          release-tag: v1.0.1
+          release-tag: ${{ github.ref_name }}
           commit-changes: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
