@@ -308,6 +308,13 @@ jobs:
       - terraform-validate
 
     steps:
+      - name: Export Git Context as TF_VAR
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          echo "TF_VAR_git_ref=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "TF_VAR_git_commit_sha=${SHORT_SHA}" >> $GITHUB_ENV
+          echo "TF_VAR_repository=${GITHUB_REPOSITORY}" >> $GITHUB_ENV
+
       - name: Set Snowflake Private Key
         if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
         run: |
