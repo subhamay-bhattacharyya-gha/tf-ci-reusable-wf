@@ -1,3 +1,40 @@
+# [1.2.0](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/compare/v1.1.0...v1.2.0) (2026-04-15)
+
+
+### Bug Fixes
+
+* pass TF_TOKEN_app_terraform_io to Export Plan step for HCP backend auth ([99737f1](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/99737f18af068a2e497182ee2c8cc6e4a01bd1b5))
+
+
+### Features
+
+* add Checkov report summarization step to CI workflow ([173fafe](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/173fafe6820ebc738524d4d6099f734e08582df0))
+* add environment variable to enforce Node.js version for JavaScript actions ([24079bf](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/24079bf8fc67b5a3a3818241177cd6c64eb669b8))
+* add iac-framework input to Checkov scan job for Terraform plan ([0ef3a93](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/0ef3a93aae08cd773c8a2406537c9e158d7dde65))
+* add placeholder jobs for YOR tagging and Checkov scan in CI workflow ([ad30834](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/ad30834ba02ba38094dc23f25edcda1e7b9e07c5))
+* add security-events permission for Checkov scan job ([211b8c3](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/211b8c3963b77ce35712d6043d62ac3375163d42))
+* add security-events permission for Checkov scan job ([7194dc3](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/7194dc38cb2ebb4f4a53db7ea4c94bc5c29df5a1))
+* enhance CI workflow with environment input and update README for variable usage ([b734ef9](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/b734ef9f5fe39e90e2a4eae345e61c338da32cc6))
+* export Git context as environment variables for Terraform ([e393b77](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/e393b77dbbdd898039dd75838a406884a09bd69b))
+* implement Checkov scan in CI workflow ([b5a13ca](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/b5a13ca87ac1a9e47a854b6609b92fdc6de3c977))
+* implement YOR tagging step in Checkov scan job ([3390a96](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/3390a9629591c3e5e809361e61993097b50c134a))
+* remove release-tag input from Checkov scan job ([073f7ab](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/073f7ab599031bcf34535e4e6f25c31a93d18655))
+* remove YOR tagging step from CI workflow ([9b3b3c5](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/9b3b3c5d434876826bff07efaf8d6e3c66aebb4d))
+* restructure Checkov scan job to include Terraform plan export and download steps ([020da09](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/020da09742bc86ecfee4b0c2422919b524648c55))
+* update Checkov scan action to use dynamic release tag ([dfb9269](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/dfb92698192199f02d36d9232de4430cc948f32a))
+* update Checkov scan action to use the main branch ([5f05d0e](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/5f05d0e072dd90246038fea93d47bec2640d4eae))
+* update Checkov scan job to use dynamic release tag from GitHub reference ([6d12598](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/6d12598fc00410f6e86dcce15c3f6c5d858427f1))
+* update Checkov scan job to use latest versions of upload and download artifact actions ([0a15c3d](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/0a15c3d3a399d3c076cc68fd5eadb08391d81497))
+* update Checkov scan job to use plan file path instead of IAC framework ([e68c2a0](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/e68c2a0d109c6a13a6507ca91cdb0a20870a92ee))
+* update CODEOWNERS to reflect new team ownership ([4053a18](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/4053a1861330838ede65fa361b0db6ffee0773e2))
+* update download-artifact action to version 8 in Checkov scan job ([9d6d375](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/9d6d3750be9e06b1d1adb7081ed118b83dbcfe29))
+* update iac-dir path to use dynamic cloud provider in Checkov scan job ([75412a0](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/75412a05615fc3cebcdd9e73da27df827b017a27))
+* update Terraform Plan action to use feature branch for plan summary ([af025e3](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/af025e3a9e93c7f860cf11b6dcf5a210cbf4edde))
+* update Terraform Plan action to use specific version and remove JSON export step ([50e22d9](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/50e22d9bd2eb11166cdf6fe80178cc3ead522afe))
+* update tf-plan-action to use the main branch and enhance Code of Conduct for inclusivity ([71c9493](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/71c949358dc807bf984eca1e81cb8a2367df3198))
+* update tf-validate-action to use a specific feature branch ([9a9c928](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/9a9c92898ad52d8ac728da3a450c6f1ab0cffb0c))
+* update tf-validate-action to use the main branch ([2b7a064](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/2b7a064ec58db2722ce2136723eaf62a0012156c))
+
 # [1.1.0](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/compare/v1.0.3...v1.1.0) (2026-02-26)
 
 
