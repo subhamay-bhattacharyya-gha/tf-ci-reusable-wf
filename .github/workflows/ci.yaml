@@ -394,7 +394,7 @@ jobs:
           path: infra/${{ inputs.cloud-provider }}/tf
 
       - name: Run Checkov Scan
-        uses: subhamay-bhattacharyya-gha/checkov-scan-action@feature/GHA-0031-feat-enhance-checkov-scan
+        uses: subhamay-bhattacharyya-gha/checkov-scan-action@main
         with:
           github-token: ${{ github.token }}
           iac-dir: infra/${{ inputs.cloud-provider }}/tf
