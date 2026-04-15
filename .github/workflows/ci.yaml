@@ -3,6 +3,13 @@ name: Terraform Multi-Cloud CI Build
 on:
   workflow_call:
     inputs:
+      # GitHub Environment (ci, devl, test, prod)
+      environment:
+        description: "GitHub environment name for accessing environment-scoped variables. Must be one of: ci, devl, test, prod."
+        required: false
+        type: string
+        default: "ci"
+
       # Concurrency group name (optional - allows caller to customize)
       concurrency-group:
         description: "Concurrency group name for workflow runs"
@@ -43,23 +50,6 @@ on:
         required: false
         type: string
 
-      # AWS Authentication Inputs
-      aws-region:
-        description: "AWS region for authentication. Required when cloud-provider is 'aws'."
-        required: false
-        type: string
-
-      # Snowflake Authentication Inputs
-      snowflake-organization-name:
-        description: "Snowflake organization name. Required when cloud-provider is 'snowflake'."
-        required: false
-        type: string
-
-      snowflake-account-name:
-        description: "Snowflake account name. Required when cloud-provider is 'snowflake'."
-        required: false
-        type: string
-
       snowflake-user:
         description: "Snowflake user name. Required when cloud-provider is 'snowflake'."
         required: false
@@ -82,20 +72,6 @@ on:
         description: "HCP Terraform Cloud API token. Required when backend-type is 'remote'."
         required: false
 
-      # AWS Authentication Secret
-      aws-role-to-assume:
-        description: "AWS IAM role ARN to assume. Required when cloud-provider is 'aws'."
-        required: false
-
-      # GCP Authentication Secret
-      gcp-wif-provider:
-        description: "GCP Workload Identity Federation provider. Required when cloud-provider is 'gcp'."
-        required: false
-
-      gcp-service-account:
-        description: "GCP service account email for authentication. Required when cloud-provider is 'gcp'."
-        required: false
-
       # Snowflake Authentication Secret
       snowflake-private-key:
         description: "Snowflake private key for authentication. Required when cloud-provider is 'snowflake'."
@@ -110,32 +86,25 @@ on:
         description: "Databricks personal access token. Required when cloud-provider is 'databricks'."
         required: false
 
-      # Azure Authentication Secrets
-      azure-client-id:
-        description: "Azure client ID for authentication. Required when cloud-provider is 'azure'."
-        required: false
-
-      azure-tenant-id:
-        description: "Azure tenant ID for authentication. Required when cloud-provider is 'azure'."
-        required: false
-
-      azure-subscription-id:
-        description: "Azure subscription ID for authentication. Required when cloud-provider is 'azure'."
-        required: false
 
 permissions:
   id-token: write
   contents: read
+  security-events: write
 
 concurrency:
   group: ${{ inputs.concurrency-group || format('terraform-ci-{0}-{1}', inputs.cloud-provider, github.ref) }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   terraform-lint:
     name: ⚙️ TFLint
     runs-on: ubuntu-latest
-    
+    environment: ${{ inputs.environment }}
+
     steps:
       - name: Print Inputs
         run: |
@@ -149,21 +118,21 @@ jobs:
           echo "tfc-token: [REDACTED - $(if [[ -n '${{ secrets.tfc-token }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
           echo ""
           echo "=== AWS Authentication Inputs ==="
-          echo "aws-region: ${{ inputs.aws-region }}"
-          echo "aws-role-to-assume: [REDACTED - $(if [[ -n '${{ secrets.aws-role-to-assume }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "aws-region: ${{ vars.AWS_REGION }}"
+          echo "aws-role-to-assume: [REDACTED - $(if [[ -n '${{ vars.AWS_OIDC_ROLE }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
           echo ""
           echo "=== GCP Authentication Inputs ==="
-          echo "gcp-wif-provider: [REDACTED - $(if [[ -n '${{ secrets.gcp-wif-provider }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
-          echo "gcp-service-account: [REDACTED - $(if [[ -n '${{ secrets.gcp-service-account }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "gcp-wif-provider: [REDACTED - $(if [[ -n '${{ vars.GCP_WIF_PROVIDER }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "gcp-service-account: [REDACTED - $(if [[ -n '${{ vars.GCP_SERVICE_ACCOUNT }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
           echo ""
           echo "=== Azure Authentication Inputs ==="
-          echo "azure-client-id: [REDACTED - $(if [[ -n '${{ secrets.azure-client-id }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
-          echo "azure-tenant-id: [REDACTED - $(if [[ -n '${{ secrets.azure-tenant-id }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
-          echo "azure-subscription-id: [REDACTED - $(if [[ -n '${{ secrets.azure-subscription-id }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "azure-client-id: [REDACTED - $(if [[ -n '${{ vars.AZURE_CLIENT_ID }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "azure-tenant-id: [REDACTED - $(if [[ -n '${{ vars.AZURE_TENANT_ID }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "azure-subscription-id: [REDACTED - $(if [[ -n '${{ vars.AZURE_SUBSCRIPTION_ID }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
           echo ""
           echo "=== Snowflake Authentication Inputs ==="
-          echo "snowflake-organization-name: [REDACTED - $(if [[ -n '${{ inputs.snowflake-organization-name }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
-          echo "snowflake-account-name: [REDACTED - $(if [[ -n '${{ inputs.snowflake-account-name }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "snowflake-organization-name: [REDACTED - $(if [[ -n '${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
+          echo "snowflake-account-name: [REDACTED - $(if [[ -n '${{ vars.SNOWFLAKE_ACCOUNT_NAME }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
           echo "snowflake-user: [REDACTED - $(if [[ -n '${{ inputs.snowflake-user }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
           echo "snowflake-role: [REDACTED - $(if [[ -n '${{ inputs.snowflake-role }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
           echo "snowflake-private-key: [REDACTED - $(if [[ -n '${{ secrets.snowflake-private-key }}' ]]; then echo 'PROVIDED'; else echo 'NOT PROVIDED'; fi)]"
@@ -179,6 +148,13 @@ jobs:
         id: validate-config
         shell: bash
         run: |
+          # Validate environment input
+          if [[ "${{ inputs.environment }}" != "ci" && "${{ inputs.environment }}" != "devl" && "${{ inputs.environment }}" != "test" && "${{ inputs.environment }}" != "prod" ]]; then
+            echo "Error: Invalid environment '${{ inputs.environment }}'. Must be one of: ci, devl, test, prod"
+            exit 1
+          fi
+          echo "✅ Valid environment: ${{ inputs.environment }}"
+
           # Validate backend-type input
           if [[ "${{ inputs.backend-type }}" != "s3" && "${{ inputs.backend-type }}" != "remote" ]]; then
             echo "Error: Invalid backend-type '${{ inputs.backend-type }}'. Must be either 's3' or 'remote'"
@@ -210,25 +186,25 @@ jobs:
           # Validate cloud provider configuration
           case "${{ inputs.cloud-provider }}" in
             "aws")
-              if [[ -z "${{ inputs.aws-region }}" || -z "${{ secrets.aws-role-to-assume }}" ]]; then
-                echo "Error: aws-region and aws-role-to-assume are required when cloud-provider is 'aws'"
+              if [[ -z "${{ vars.AWS_REGION }}" || -z "${{ vars.AWS_OIDC_ROLE }}" ]]; then
+                echo "Error: AWS_REGION and AWS_OIDC_ROLE environment variables are required when cloud-provider is 'aws'"
                 exit 1
               fi
               ;;
             "gcp")
-              if [[ -z "${{ secrets.gcp-wif-provider }}" || -z "${{ secrets.gcp-service-account }}" ]]; then
+              if [[ -z "${{ vars.GCP_WIF_PROVIDER }}" || -z "${{ vars.GCP_SERVICE_ACCOUNT }}" ]]; then
                 echo "Error: gcp-wif-provider and gcp-service-account are required when cloud-provider is 'gcp'"
                 exit 1
               fi
               ;;
             "azure")
-              if [[ -z "${{ secrets.azure-client-id }}" || -z "${{ secrets.azure-tenant-id }}" || -z "${{ secrets.azure-subscription-id }}" ]]; then
+              if [[ -z "${{ vars.AZURE_CLIENT_ID }}" || -z "${{ vars.AZURE_TENANT_ID }}" || -z "${{ vars.AZURE_SUBSCRIPTION_ID }}" ]]; then
                 echo "Error: azure-client-id, azure-tenant-id, and azure-subscription-id are required when cloud-provider is 'azure'"
                 exit 1
               fi
               ;;
             "snowflake")
-              if [[ -z "${{ inputs.snowflake-organization-name }}" || -z "${{ inputs.snowflake-account-name }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
+              if [[ -z "${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}" || -z "${{ vars.SNOWFLAKE_ACCOUNT_NAME }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
                 echo "Error: snowflake-organization-name, snowflake-account-name, snowflake-user, snowflake-role, and snowflake-private-key are required when cloud-provider is 'snowflake'"
                 exit 1
               fi
@@ -246,8 +222,8 @@ jobs:
               # Check for AWS directory
               if [[ -d "infra/aws" ]]; then
                 echo "Found infra/aws directory - validating AWS inputs..."
-                if [[ -z "${{ inputs.aws-region }}" || -z "${{ secrets.aws-role-to-assume }}" ]]; then
-                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- AWS: aws-region and aws-role-to-assume are required"
+                if [[ -z "${{ vars.AWS_REGION }}" || -z "${{ vars.AWS_OIDC_ROLE }}" ]]; then
+                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- AWS: AWS_REGION and AWS_OIDC_ROLE environment variables are required"
                 else
                   echo "  ✅ AWS inputs validated"
                 fi
@@ -256,7 +232,7 @@ jobs:
               # Check for GCP directory
               if [[ -d "infra/gcp" ]]; then
                 echo "Found infra/gcp directory - validating GCP inputs..."
-                if [[ -z "${{ secrets.gcp-wif-provider }}" || -z "${{ secrets.gcp-service-account }}" ]]; then
+                if [[ -z "${{ vars.GCP_WIF_PROVIDER }}" || -z "${{ vars.GCP_SERVICE_ACCOUNT }}" ]]; then
                   VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- GCP: gcp-wif-provider and gcp-service-account are required"
                 else
                   echo "  ✅ GCP inputs validated"
@@ -266,7 +242,7 @@ jobs:
               # Check for Azure directory
               if [[ -d "infra/azure" ]]; then
                 echo "Found infra/azure directory - validating Azure inputs..."
-                if [[ -z "${{ secrets.azure-client-id }}" || -z "${{ secrets.azure-tenant-id }}" || -z "${{ secrets.azure-subscription-id }}" ]]; then
+                if [[ -z "${{ vars.AZURE_CLIENT_ID }}" || -z "${{ vars.AZURE_TENANT_ID }}" || -z "${{ vars.AZURE_SUBSCRIPTION_ID }}" ]]; then
                   VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Azure: azure-client-id, azure-tenant-id, and azure-subscription-id are required"
                 else
                   echo "  ✅ Azure inputs validated"
@@ -276,7 +252,7 @@ jobs:
               # Check for Snowflake directory
               if [[ -d "infra/snowflake" ]]; then
                 echo "Found infra/snowflake directory - validating Snowflake inputs..."
-                if [[ -z "${{ inputs.snowflake-organization-name }}" || -z "${{ inputs.snowflake-account-name }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
+                if [[ -z "${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}" || -z "${{ vars.SNOWFLAKE_ACCOUNT_NAME }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
                   VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Snowflake: snowflake-organization-name, snowflake-account-name, snowflake-user, snowflake-role, and snowflake-private-key are required"
                 else
                   echo "  ✅ Snowflake inputs validated"
@@ -315,7 +291,7 @@ jobs:
   terraform-validate:
     name: ✅ Validate
     runs-on: ubuntu-latest
-    needs: 
+    needs:
       - terraform-lint
 
     steps:
@@ -327,10 +303,18 @@ jobs:
   terraform-plan:
     name: 🔍 Plan
     runs-on: ubuntu-latest
-    needs: 
+    environment: ${{ inputs.environment }}
+    needs:
       - terraform-validate
 
     steps:
+      - name: Export Git Context as TF_VAR
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          echo "TF_VAR_git_ref=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "TF_VAR_git_commit_sha=${SHORT_SHA}" >> $GITHUB_ENV
+          echo "TF_VAR_repository=${GITHUB_REPOSITORY}" >> $GITHUB_ENV
+
       - name: Set Snowflake Private Key
         if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
         run: |
@@ -356,13 +340,13 @@ jobs:
           echo "Line count:"
           echo "$SNOWFLAKE_PRIVATE_KEY" | wc -l
 
-      - name: Terraform Plan 
+      - name: Terraform Plan
         uses: subhamay-bhattacharyya-gha/tf-plan-action@main
         env:
           TF_VAR_databricks_host: ${{ secrets.databricks-host }}
           TF_VAR_databricks_token: ${{ secrets.databricks-token }}
-          TF_VAR_snowflake_organization_name: ${{ inputs.snowflake-organization-name }}
-          TF_VAR_snowflake_account_name: ${{ inputs.snowflake-account-name }}
+          TF_VAR_snowflake_organization_name: ${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}
+          TF_VAR_snowflake_account_name: ${{ vars.SNOWFLAKE_ACCOUNT_NAME }}
           TF_VAR_snowflake_user: ${{ inputs.snowflake-user }}
           TF_VAR_snowflake_role: ${{ inputs.snowflake-role }}
           SNOWFLAKE_PRIVATE_KEY: ${{ env.SNOWFLAKE_PRIVATE_KEY }}
@@ -374,11 +358,49 @@ jobs:
           s3-region: ${{ inputs.s3-region }}
           s3-key-prefix: ${{ inputs.s3-key-prefix }}
           tfc-token: ${{ secrets.tfc-token }}
-          aws-region: ${{ inputs.aws-region }}
-          aws-role-to-assume: ${{ secrets.aws-role-to-assume }}
-          gcp-wif-provider: ${{ secrets.gcp-wif-provider }}
-          gcp-service-account: ${{ secrets.gcp-service-account }}
-          azure-client-id: ${{ secrets.azure-client-id }}
-          azure-tenant-id: ${{ secrets.azure-tenant-id }}
-          azure-subscription-id: ${{ secrets.azure-subscription-id }}
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-role-to-assume: ${{ vars.AWS_OIDC_ROLE }}
+          gcp-wif-provider: ${{ vars.GCP_WIF_PROVIDER }}
+          gcp-service-account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          azure-client-id: ${{ vars.AZURE_CLIENT_ID }}
+          azure-tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          azure-subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           tf-vars-file: ${{ inputs.tf-vars-file }}
+
+      - name: Upload Terraform Plan JSON
+        uses: actions/upload-artifact@v7
+        with:
+          name: tfplan-json-${{ inputs.cloud-provider }}
+          path: infra/${{ inputs.cloud-provider }}/tf/tfplan.json
+          retention-days: 1
+
+  checkov-scan:
+    name: 🔐 Checkov Scan
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    permissions:
+      id-token: write
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Download Terraform Plan JSON
+        uses: actions/download-artifact@v8
+        with:
+          name: tfplan-json-${{ inputs.cloud-provider }}
+          path: infra/${{ inputs.cloud-provider }}/tf
+
+      - name: Run Checkov Scan
+        uses: subhamay-bhattacharyya-gha/checkov-scan-action@main
+        with:
+          github-token: ${{ github.token }}
+          iac-dir: infra/${{ inputs.cloud-provider }}/tf
+          iac-framework: "terraform_plan"
+          plan-file: infra/${{ inputs.cloud-provider }}/tf/tfplan.json
+          soft-fail: true
+
+      - name: 📋 Summarize and Print Checkov Scan Report with Snippets
+        uses: subhamay-bhattacharyya-gha/checkov-report-action@main
