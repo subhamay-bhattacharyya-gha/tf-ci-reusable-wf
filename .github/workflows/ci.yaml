@@ -296,7 +296,7 @@ jobs:
 
     steps:
       - name: Terraform Validate 
-        uses: subhamay-bhattacharyya-gha/tf-validate-action@main
+        uses: subhamay-bhattacharyya-gha/tf-validate-action@feature/GHA-0049-refactor-move-action-inpu
         with:
           tf-config-path: infra/${{ inputs.cloud-provider }}/tf
 
