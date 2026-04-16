@@ -76,8 +76,8 @@ The following variables are read from the GitHub environment specified by the `e
 | `AZURE_CLIENT_ID`             | Azure client ID for authentication               | `cloud-provider` = `azure`    |
 | `AZURE_TENANT_ID`             | Azure tenant ID for authentication               | `cloud-provider` = `azure`    |
 | `AZURE_SUBSCRIPTION_ID`       | Azure subscription ID for authentication         | `cloud-provider` = `azure`    |
-| `SNOWFLAKE_ORGANIZATION_NAME` | Snowflake organization name                      | `cloud-provider` = `snowflake` |
-| `SNOWFLAKE_ACCOUNT_NAME`      | Snowflake account name                           | `cloud-provider` = `snowflake` |
+| `SNOWFLAKE_ORGANIZATION_NAME` | Snowflake organization name                      | `cloud-provider` = `snowflake` **and** `backend-type` ≠ `remote` (with `remote`, the HCP Terraform variable set supplies this) |
+| `SNOWFLAKE_ACCOUNT_NAME`      | Snowflake account name                           | `cloud-provider` = `snowflake` **and** `backend-type` ≠ `remote` (with `remote`, the HCP Terraform variable set supplies this) |
 
 ---
 
@@ -376,7 +376,7 @@ The workflow performs comprehensive input validation before execution:
 - **AWS**: Requires `AWS_REGION` and `AWS_OIDC_ROLE` environment variables
 - **GCP**: Requires `GCP_WIF_PROVIDER` and `GCP_SERVICE_ACCOUNT` environment variables
 - **Azure**: Requires `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` environment variables
-- **Snowflake**: Always requires `SNOWFLAKE_ORGANIZATION_NAME` and `SNOWFLAKE_ACCOUNT_NAME` environment variables. `snowflake-user`, `snowflake-role`, and `snowflake-private-key` are required **only when `backend-type` is not `remote`** — when `backend-type: remote`, these are delegated to the HCP Terraform variable set and any caller-supplied values are only forwarded if non-empty (empty values will not override the variable set)
+- **Snowflake**: When `backend-type` is not `remote`, requires all of `SNOWFLAKE_ORGANIZATION_NAME`, `SNOWFLAKE_ACCOUNT_NAME` environment variables, `snowflake-user` / `snowflake-role` inputs, and `snowflake-private-key` secret. When `backend-type: remote`, all Snowflake credentials are delegated to the HCP Terraform variable set; the workflow only forwards values that are non-empty (empty values will not override the variable set), so GH variables and inputs may be omitted entirely
 - **Databricks**: Requires `databricks-host` and `databricks-token` secrets
 - **Platform**: Validates inputs only for detected provider directories
 

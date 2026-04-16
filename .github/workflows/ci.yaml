@@ -204,17 +204,13 @@ jobs:
               fi
               ;;
             "snowflake")
-              if [[ -z "${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}" || -z "${{ vars.SNOWFLAKE_ACCOUNT_NAME }}" ]]; then
-                echo "Error: SNOWFLAKE_ORGANIZATION_NAME and SNOWFLAKE_ACCOUNT_NAME GitHub variables are required when cloud-provider is 'snowflake'"
-                exit 1
-              fi
               if [[ "${{ inputs.backend-type }}" != "remote" ]]; then
-                if [[ -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
-                  echo "Error: snowflake-user, snowflake-role, and snowflake-private-key are required when cloud-provider is 'snowflake' and backend-type is not 'remote'"
+                if [[ -z "${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}" || -z "${{ vars.SNOWFLAKE_ACCOUNT_NAME }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
+                  echo "Error: SNOWFLAKE_ORGANIZATION_NAME, SNOWFLAKE_ACCOUNT_NAME, snowflake-user, snowflake-role, and snowflake-private-key are required when cloud-provider is 'snowflake' and backend-type is not 'remote'"
                   exit 1
                 fi
               else
-                echo "ℹ️   backend-type=remote — delegating snowflake-user/role/private-key resolution to HCP variable set"
+                echo "ℹ️   backend-type=remote — delegating SNOWFLAKE_ORGANIZATION_NAME / SNOWFLAKE_ACCOUNT_NAME / snowflake-user / snowflake-role / snowflake-private-key to HCP variable set (any values supplied via GH vars/inputs will still override if non-empty)"
               fi
               ;;
             "databricks")
@@ -260,10 +256,10 @@ jobs:
               # Check for Snowflake directory
               if [[ -d "infra/snowflake" ]]; then
                 echo "Found infra/snowflake directory - validating Snowflake inputs..."
-                if [[ -z "${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}" || -z "${{ vars.SNOWFLAKE_ACCOUNT_NAME }}" ]]; then
-                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Snowflake: SNOWFLAKE_ORGANIZATION_NAME and SNOWFLAKE_ACCOUNT_NAME GitHub variables are required"
-                elif [[ "${{ inputs.backend-type }}" != "remote" ]] && [[ -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
-                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Snowflake: snowflake-user, snowflake-role, and snowflake-private-key are required when backend-type is not 'remote'"
+                if [[ "${{ inputs.backend-type }}" == "remote" ]]; then
+                  echo "  ℹ️   backend-type=remote — delegating Snowflake credentials to HCP variable set"
+                elif [[ -z "${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}" || -z "${{ vars.SNOWFLAKE_ACCOUNT_NAME }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
+                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Snowflake: SNOWFLAKE_ORGANIZATION_NAME, SNOWFLAKE_ACCOUNT_NAME, snowflake-user, snowflake-role, and snowflake-private-key are required when backend-type is not 'remote'"
                 else
                   echo "  ✅ Snowflake inputs validated"
                 fi
