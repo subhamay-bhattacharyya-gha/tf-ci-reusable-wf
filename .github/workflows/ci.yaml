@@ -204,9 +204,17 @@ jobs:
               fi
               ;;
             "snowflake")
-              if [[ -z "${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}" || -z "${{ vars.SNOWFLAKE_ACCOUNT_NAME }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
-                echo "Error: snowflake-organization-name, snowflake-account-name, snowflake-user, snowflake-role, and snowflake-private-key are required when cloud-provider is 'snowflake'"
+              if [[ -z "${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}" || -z "${{ vars.SNOWFLAKE_ACCOUNT_NAME }}" ]]; then
+                echo "Error: SNOWFLAKE_ORGANIZATION_NAME and SNOWFLAKE_ACCOUNT_NAME GitHub variables are required when cloud-provider is 'snowflake'"
                 exit 1
+              fi
+              if [[ "${{ inputs.backend-type }}" != "remote" ]]; then
+                if [[ -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
+                  echo "Error: snowflake-user, snowflake-role, and snowflake-private-key are required when cloud-provider is 'snowflake' and backend-type is not 'remote'"
+                  exit 1
+                fi
+              else
+                echo "ℹ️   backend-type=remote — delegating snowflake-user/role/private-key resolution to HCP variable set"
               fi
               ;;
             "databricks")
@@ -252,8 +260,10 @@ jobs:
               # Check for Snowflake directory
               if [[ -d "infra/snowflake" ]]; then
                 echo "Found infra/snowflake directory - validating Snowflake inputs..."
-                if [[ -z "${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}" || -z "${{ vars.SNOWFLAKE_ACCOUNT_NAME }}" || -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
-                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Snowflake: snowflake-organization-name, snowflake-account-name, snowflake-user, snowflake-role, and snowflake-private-key are required"
+                if [[ -z "${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}" || -z "${{ vars.SNOWFLAKE_ACCOUNT_NAME }}" ]]; then
+                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Snowflake: SNOWFLAKE_ORGANIZATION_NAME and SNOWFLAKE_ACCOUNT_NAME GitHub variables are required"
+                elif [[ "${{ inputs.backend-type }}" != "remote" ]] && [[ -z "${{ inputs.snowflake-user }}" || -z "${{ inputs.snowflake-role }}" || -z "${{ secrets.snowflake-private-key }}" ]]; then
+                  VALIDATION_ERRORS="${VALIDATION_ERRORS}\n- Snowflake: snowflake-user, snowflake-role, and snowflake-private-key are required when backend-type is not 'remote'"
                 else
                   echo "  ✅ Snowflake inputs validated"
                 fi
@@ -315,14 +325,25 @@ jobs:
           echo "TF_VAR_git_commit_sha=${SHORT_SHA}" >> $GITHUB_ENV
           echo "TF_VAR_repository=${GITHUB_REPOSITORY}" >> $GITHUB_ENV
 
-      - name: Set Snowflake Private Key
+      - name: Export Snowflake private key to GITHUB_ENV
         if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
+        shell: bash
+        env:
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.snowflake-private-key }}
         run: |
-          EOF_MARKER=$(openssl rand -hex 16)
-          echo "SNOWFLAKE_PRIVATE_KEY<<${EOF_MARKER}" >> $GITHUB_ENV
-          printf '%s' "${{ secrets.snowflake-private-key }}" >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "${EOF_MARKER}" >> $GITHUB_ENV
+          set -euo pipefail
+
+          KEY_FILE="/tmp/snowflake_key.p8"
+          printf '%b\n' "${SNOWFLAKE_PRIVATE_KEY}" > "${KEY_FILE}"
+          chmod 600 "${KEY_FILE}"
+
+          DELIM="EOF_$(openssl rand -hex 16)"
+          {
+            echo "SNOWFLAKE_PRIVATE_KEY<<${DELIM}"
+            cat "${KEY_FILE}"
+            echo ""
+            echo "${DELIM}"
+          } >> "${GITHUB_ENV}"
 
       - name: Debug Key Format
         if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
@@ -340,6 +361,22 @@ jobs:
           echo "Line count:"
           echo "$SNOWFLAKE_PRIVATE_KEY" | wc -l
 
+      - name: Export Snowflake Terraform vars (only when provided)
+        if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${{ inputs.snowflake-user }}" ]]; then
+            echo "TF_VAR_snowflake_user=${{ inputs.snowflake-user }}" >> "$GITHUB_ENV"
+          else
+            echo "snowflake-user not supplied by caller — HCP variable set will own TF_VAR_snowflake_user"
+          fi
+          if [[ -n "${{ inputs.snowflake-role }}" ]]; then
+            echo "TF_VAR_snowflake_role=${{ inputs.snowflake-role }}" >> "$GITHUB_ENV"
+          else
+            echo "snowflake-role not supplied by caller — HCP variable set will own TF_VAR_snowflake_role"
+          fi
+
       - name: Terraform Plan
         uses: subhamay-bhattacharyya-gha/tf-plan-action@main
         env:
@@ -347,8 +384,6 @@ jobs:
           TF_VAR_databricks_token: ${{ secrets.databricks-token }}
           TF_VAR_snowflake_organization_name: ${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}
           TF_VAR_snowflake_account_name: ${{ vars.SNOWFLAKE_ACCOUNT_NAME }}
-          TF_VAR_snowflake_user: ${{ inputs.snowflake-user }}
-          TF_VAR_snowflake_role: ${{ inputs.snowflake-role }}
           SNOWFLAKE_PRIVATE_KEY: ${{ env.SNOWFLAKE_PRIVATE_KEY }}
         with:
           cloud-provider: ${{ inputs.cloud-provider }}
