@@ -361,18 +361,39 @@ jobs:
           echo "Line count:"
           echo "$SNOWFLAKE_PRIVATE_KEY" | wc -l
 
-      - name: Export Snowflake Terraform vars (only when provided)
+      - name: Export Snowflake Terraform vars (sanitized)
         if: inputs.cloud-provider == 'snowflake' || inputs.cloud-provider == 'platform'
         shell: bash
+        env:
+          INPUT_SNOWFLAKE_USER: ${{ inputs.snowflake-user }}
+          INPUT_SNOWFLAKE_ROLE: ${{ inputs.snowflake-role }}
+          VAR_SNOWFLAKE_ORGANIZATION_NAME: ${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}
+          VAR_SNOWFLAKE_ACCOUNT_NAME: ${{ vars.SNOWFLAKE_ACCOUNT_NAME }}
         run: |
           set -euo pipefail
-          if [[ -n "${{ inputs.snowflake-user }}" ]]; then
-            echo "TF_VAR_snowflake_user=${{ inputs.snowflake-user }}" >> "$GITHUB_ENV"
+          # Strip CR/LF and trailing whitespace. GH variables entered via the UI
+          # occasionally carry a trailing CRLF which corrupts the Snowflake
+          # account URL (e.g. "account\r\n.snowflakecomputing.com" → "invalid URL escape %0D").
+          sanitize() { printf '%s' "$1" | tr -d '\r\n' | sed 's/[[:space:]]*$//'; }
+
+          ORG="$(sanitize "${VAR_SNOWFLAKE_ORGANIZATION_NAME}")"
+          ACCT="$(sanitize "${VAR_SNOWFLAKE_ACCOUNT_NAME}")"
+          USR="$(sanitize "${INPUT_SNOWFLAKE_USER}")"
+          ROLE="$(sanitize "${INPUT_SNOWFLAKE_ROLE}")"
+
+          if [[ -n "$ORG" ]]; then
+            echo "TF_VAR_snowflake_organization_name=$ORG" >> "$GITHUB_ENV"
+          fi
+          if [[ -n "$ACCT" ]]; then
+            echo "TF_VAR_snowflake_account_name=$ACCT" >> "$GITHUB_ENV"
+          fi
+          if [[ -n "$USR" ]]; then
+            echo "TF_VAR_snowflake_user=$USR" >> "$GITHUB_ENV"
           else
             echo "snowflake-user not supplied by caller — HCP variable set will own TF_VAR_snowflake_user"
           fi
-          if [[ -n "${{ inputs.snowflake-role }}" ]]; then
-            echo "TF_VAR_snowflake_role=${{ inputs.snowflake-role }}" >> "$GITHUB_ENV"
+          if [[ -n "$ROLE" ]]; then
+            echo "TF_VAR_snowflake_role=$ROLE" >> "$GITHUB_ENV"
           else
             echo "snowflake-role not supplied by caller — HCP variable set will own TF_VAR_snowflake_role"
           fi
@@ -382,8 +403,6 @@ jobs:
         env:
           TF_VAR_databricks_host: ${{ secrets.databricks-host }}
           TF_VAR_databricks_token: ${{ secrets.databricks-token }}
-          TF_VAR_snowflake_organization_name: ${{ vars.SNOWFLAKE_ORGANIZATION_NAME }}
-          TF_VAR_snowflake_account_name: ${{ vars.SNOWFLAKE_ACCOUNT_NAME }}
           SNOWFLAKE_PRIVATE_KEY: ${{ env.SNOWFLAKE_PRIVATE_KEY }}
         with:
           cloud-provider: ${{ inputs.cloud-provider }}
