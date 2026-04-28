@@ -1,3 +1,12 @@
+# [1.3.0](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/compare/v1.2.0...v1.3.0) (2026-04-28)
+
+
+### Features
+
+* enhance Snowflake input validation and update README for backend-type handling ([d33578b](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/d33578b86b75e52fde4508d1552f588307d7934c))
+* sanitize Snowflake Terraform variables to prevent corruption ([220e617](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/220e61724c0aaa589384a7e6d2af5d1b6bcfb26b))
+* update Snowflake input validation and documentation for remote backend handling ([dbb84af](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/commit/dbb84af5658f1bc8f36108c82d29b52594ba8989))
+
 # [1.2.0](https://github.com/subhamay-bhattacharyya-gha/tf-ci-reusable-wf/compare/v1.1.0...v1.2.0) (2026-04-15)
 
 
