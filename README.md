@@ -49,8 +49,8 @@ This GitHub Action provides a reusable workflow that:
 | `s3-bucket`             | S3 bucket name for Terraform state (required when backend-type is `s3`)   | ❌ No    | —                      |
 | `s3-region`             | AWS region for S3 bucket (required when backend-type is `s3`)             | ❌ No    | —                      |
 | `s3-key-prefix`         | S3 key prefix for Terraform state file (required when backend-type is `s3`) | ❌ No  | —                      |
-| `snowflake-user`        | Snowflake user name (required when cloud-provider is `snowflake`)         | ❌ No    | —                      |
-| `snowflake-role`        | Snowflake role name (required when cloud-provider is `snowflake`)         | ❌ No    | —                      |
+| `snowflake-user`        | Snowflake user name (required when `cloud-provider` is `snowflake` **and** `backend-type` is not `remote`; with `remote`, the HCP Terraform variable set supplies this) | ❌ No    | —                      |
+| `snowflake-role`        | Snowflake role name (required when `cloud-provider` is `snowflake` **and** `backend-type` is not `remote`; with `remote`, the HCP Terraform variable set supplies this) | ❌ No    | —                      |
 | `terraform-dir`         | Directory containing Terraform configuration files relative to cloud provider path | ❌ No | `tf`                   |
 | `tf-vars-file`          | Terraform variables file to use                                            | ❌ No    | `terraform.tfvars`     |
 
@@ -59,7 +59,7 @@ This GitHub Action provides a reusable workflow that:
 | Name                    | Description                                                      | Required When                  |
 |-------------------------|------------------------------------------------------------------|--------------------------------|
 | `tfc-token`             | HCP Terraform Cloud API token                                   | `backend-type` = `remote`      |
-| `snowflake-private-key` | Snowflake private key for authentication (base64 encoded)       | `cloud-provider` = `snowflake` |
+| `snowflake-private-key` | Snowflake private key for authentication (base64 encoded)       | `cloud-provider` = `snowflake` **and** `backend-type` ≠ `remote` (with `remote`, the HCP Terraform variable set supplies this) |
 | `databricks-host`       | Databricks workspace URL                                         | `cloud-provider` = `databricks` |
 | `databricks-token`      | Databricks personal access token                                 | `cloud-provider` = `databricks` |
 
@@ -76,8 +76,8 @@ The following variables are read from the GitHub environment specified by the `e
 | `AZURE_CLIENT_ID`             | Azure client ID for authentication               | `cloud-provider` = `azure`    |
 | `AZURE_TENANT_ID`             | Azure tenant ID for authentication               | `cloud-provider` = `azure`    |
 | `AZURE_SUBSCRIPTION_ID`       | Azure subscription ID for authentication         | `cloud-provider` = `azure`    |
-| `SNOWFLAKE_ORGANIZATION_NAME` | Snowflake organization name                      | `cloud-provider` = `snowflake` |
-| `SNOWFLAKE_ACCOUNT_NAME`      | Snowflake account name                           | `cloud-provider` = `snowflake` |
+| `SNOWFLAKE_ORGANIZATION_NAME` | Snowflake organization name                      | `cloud-provider` = `snowflake` **and** `backend-type` ≠ `remote` (with `remote`, the HCP Terraform variable set supplies this) |
+| `SNOWFLAKE_ACCOUNT_NAME`      | Snowflake account name                           | `cloud-provider` = `snowflake` **and** `backend-type` ≠ `remote` (with `remote`, the HCP Terraform variable set supplies this) |
 
 ---
 
@@ -250,6 +250,32 @@ jobs:
       snowflake-private-key: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
 ```
 
+### Snowflake with HCP Terraform Cloud Backend
+
+When `backend-type` is `remote`, credentials (`snowflake-user`, `snowflake-role`, `snowflake-private-key`) are resolved from the HCP Terraform variable set. Omit them from the caller — passing empty values would override the variable set and cause authentication failures such as `260001: user is empty`.
+
+```yaml
+name: Terraform CI - Snowflake (HCP)
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  terraform-ci:
+    uses: subhamay-bhattacharyya-gha/tf-ci-reusable-wf/.github/workflows/ci.yaml@main
+    with:
+      environment: devl
+      cloud-provider: snowflake
+      tflint-ver: "v0.50.0"
+      backend-type: remote
+      tf-vars-file: snowflake.tfvars
+    secrets:
+      tfc-token: ${{ secrets.TFC_TOKEN }}
+```
+
 ### Databricks with S3 Backend
 
 ```yaml
@@ -350,7 +376,7 @@ The workflow performs comprehensive input validation before execution:
 - **AWS**: Requires `AWS_REGION` and `AWS_OIDC_ROLE` environment variables
 - **GCP**: Requires `GCP_WIF_PROVIDER` and `GCP_SERVICE_ACCOUNT` environment variables
 - **Azure**: Requires `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` environment variables
-- **Snowflake**: Requires `SNOWFLAKE_ORGANIZATION_NAME` and `SNOWFLAKE_ACCOUNT_NAME` environment variables, `snowflake-user` and `snowflake-role` inputs, and `snowflake-private-key` secret
+- **Snowflake**: When `backend-type` is not `remote`, requires all of `SNOWFLAKE_ORGANIZATION_NAME`, `SNOWFLAKE_ACCOUNT_NAME` environment variables, `snowflake-user` / `snowflake-role` inputs, and `snowflake-private-key` secret. When `backend-type: remote`, all Snowflake credentials are delegated to the HCP Terraform variable set; the workflow only forwards values that are non-empty (empty values will not override the variable set), so GH variables and inputs may be omitted entirely
 - **Databricks**: Requires `databricks-host` and `databricks-token` secrets
 - **Platform**: Validates inputs only for detected provider directories
 
