@@ -435,7 +435,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download Terraform Plan JSON
         uses: actions/download-artifact@v8
